@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 #     embeddings_index[word] = coefs
 # f.close()
 
-MAX_SEQUENCE_LENGTH = 60
+MAX_SEQUENCE_LENGTH = 20
 MAX_NB_WORDS = 40000
 EMBEDDING_DIM = 100
 VALIDATION_SPLIT = 0.2
@@ -81,6 +81,7 @@ tokenizer = Tokenizer(num_words=MAX_NB_WORDS)
 tokenizer.fit_on_texts([r[0] for r in all_reviews])
 sequences = tokenizer.texts_to_sequences([r[0] for r in all_reviews])
 data = pad_sequences(sequences, maxlen=MAX_SEQUENCE_LENGTH)
+print(np.mean([len(s) for s in sequences]))
 
 word_index = tokenizer.word_index
 print(word_index)
@@ -109,13 +110,13 @@ embedding_layer = Embedding(len(word_index) + 1,
 sequence_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences = embedding_layer(sequence_input)
 # 128 filters per layers, 5 kernel size row-wise
-l_cov1= Conv1D(32, 5, activation='relu')(embedded_sequences)
-l_pool1 = MaxPooling1D(5)(l_cov1)
-l_cov2 = Conv1D(32, 5, activation='relu')(l_pool1)
+l_cov1= Conv1D(32, 3, activation='relu')(embedded_sequences)
+l_pool1 = MaxPooling1D(3)(l_cov1)
+l_cov2 = Conv1D(32, 3, activation='relu')(l_pool1)
 # l_pool2 = MaxPooling1D(5)(l_cov2)
 # l_cov3 = Conv1D(128, 5, activation='relu')(l_pool2)
 # l_pool3 = MaxPooling1D(35)(l_cov2)  # global max pooling
-l_pool3 = MaxPooling1D(7)(l_cov2)  # global max pooling
+l_pool3 = MaxPooling1D(3)(l_cov2)  # global max pooling
 l_flat = Flatten()(l_pool3)
 l_dense = Dense(32, activation='relu')(l_flat)
 preds = Dense(1, activation='softmax')(l_dense)
