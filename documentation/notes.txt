@@ -1,0 +1,8 @@
+Style files source
+https://naacl2019.org/calls/demos/
+
+CNN for text classification
+https://arxiv.org/pdf/1408.5882.pdf
+    - word2vec (300)
+    - filter over words
+https://medium.com/jatana/report-on-text-classification-using-cnn-rnn-han-f0e887214d5f
