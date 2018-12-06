@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 #     embeddings_index[word] = coefs
 # f.close()
 
-MAX_SEQUENCE_LENGTH = 1000
+MAX_SEQUENCE_LENGTH = 60
 MAX_NB_WORDS = 40000
 EMBEDDING_DIM = 100
 VALIDATION_SPLIT = 0.2
@@ -95,13 +95,12 @@ for word, i in word_index.items():
 
 print(unknown_counter/len(word_index))
 
-nb_pos_validation = int(VALIDATION_SPLIT * len(positive_reviews))
-nb_neg_validation = int(VALIDATION_SPLIT * len(negative_reviews))
+nb_validation = int(VALIDATION_SPLIT * len(all_reviews))
 
-x_train = data[:-nb_pos_validation]
-y_train = [r[1] for r in all_reviews[:-nb_pos_validation]]
-x_val = data[-nb_pos_validation:]
-y_val = [r[1] for r in all_reviews[-nb_pos_validation:]]
+x_train = data[:-nb_validation]
+y_train = [r[1] for r in all_reviews[:-nb_validation]]
+x_val = data[-nb_validation:]
+y_val = [r[1] for r in all_reviews[-nb_validation:]]
 
 # Setup CNN network
 embedding_layer = Embedding(len(word_index) + 1,
@@ -110,14 +109,15 @@ embedding_layer = Embedding(len(word_index) + 1,
 sequence_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences = embedding_layer(sequence_input)
 # 128 filters per layers, 5 kernel size row-wise
-l_cov1= Conv1D(128, 5, activation='relu')(embedded_sequences)
+l_cov1= Conv1D(32, 5, activation='relu')(embedded_sequences)
 l_pool1 = MaxPooling1D(5)(l_cov1)
-l_cov2 = Conv1D(128, 5, activation='relu')(l_pool1)
-l_pool2 = MaxPooling1D(5)(l_cov2)
-l_cov3 = Conv1D(128, 5, activation='relu')(l_pool2)
-l_pool3 = MaxPooling1D(35)(l_cov3)  # global max pooling
+l_cov2 = Conv1D(32, 5, activation='relu')(l_pool1)
+# l_pool2 = MaxPooling1D(5)(l_cov2)
+# l_cov3 = Conv1D(128, 5, activation='relu')(l_pool2)
+# l_pool3 = MaxPooling1D(35)(l_cov2)  # global max pooling
+l_pool3 = MaxPooling1D(7)(l_cov2)  # global max pooling
 l_flat = Flatten()(l_pool3)
-l_dense = Dense(128, activation='relu')(l_flat)
+l_dense = Dense(32, activation='relu')(l_flat)
 preds = Dense(1, activation='softmax')(l_dense)
 
 model = Model(sequence_input, preds)
@@ -130,4 +130,4 @@ model.summary()
 cp=ModelCheckpoint('model_cnn.hdf5',monitor='val_acc',verbose=1,save_best_only=True)
 
 # results=model.fit(x_train, y_train, validation_data=(x_val, y_val),epochs=15, batch_size=2,callbacks=[cp])
-results=model.fit(x_train, y_train, validation_data=(x_val, y_val),epochs=15, batch_size=2)
+results=model.fit(x_train, y_train, validation_data=(x_val, y_val),epochs=15, batch_size=24)
