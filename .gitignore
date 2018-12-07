@@ -3,6 +3,9 @@
 
 nltk_pos_int_dataframe.pkl
 nltk_pos_dataframe.pkl
+spacy_data_test.pkl
+spacy_data_training.pkl
+
 model_cnn.hdf5
 glove.6B.100d.txt
 *.aux

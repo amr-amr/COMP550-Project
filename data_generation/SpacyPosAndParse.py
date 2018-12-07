@@ -7,6 +7,7 @@ class SpacyPosAndParse:
     def __init__(self, spacy_model="en_core_web_lg"):
         self.pos_dict = self.build_pos_dict()
         self.nlp = spacy.load(spacy_model)
+        self.counter = 0
 
     def build_pos_dict(self):
         pos_dict = {'ADJ': 0,
@@ -33,6 +34,9 @@ class SpacyPosAndParse:
         pos_tags = []
         parse_tree = []
 
+        if self.counter % 100 == 0:
+            print(self.counter)
+
         doc = self.nlp(text)
         for token in doc:
             # parse pos tags
@@ -45,6 +49,7 @@ class SpacyPosAndParse:
             dep_and_head = (token.dep_, token.head.i)
             parse_tree.append(dep_and_head)
 
+        self.counter = self.counter + 1
         return pos_tags, parse_tree
 
 
