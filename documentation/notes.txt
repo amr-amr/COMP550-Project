@@ -1,4 +1,7 @@
-Style files source
+Archives with previous styles
+https://github.com/acl-org/acl-pub/tree/81b8a345b4b32eaf260e9b95b744d7651f6de4ff/paper_styles/archive
+
+2019 Style files source
 https://naacl2019.org/calls/demos/
 
 CNN for text classification
