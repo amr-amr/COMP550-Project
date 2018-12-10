@@ -3,12 +3,14 @@ from keras.models import Model
 from keras.optimizers import Adam
 from keras.layers.normalization import BatchNormalization
 from keras_extensions import ExperimentParameters
+from keras import backend as K
+from keras.layers import Input, Lambda
 
 
 class ModelFactory:
 
     @staticmethod
-    def lstm_pos_input_tensor(params: ExperimentParameters):
+    def pos_input_tensor(params: ExperimentParameters):
 
         wv_input = Input(shape=(params.sent_dim, params.wv_dim), name='wv_input')
         pos_input = Input(shape=(params.sent_dim,), name='pos_input')
@@ -22,7 +24,22 @@ class ModelFactory:
         return concatenate_layer, [wv_input, pos_input]
 
     @staticmethod
-    def lstm_input_tensor(params: ExperimentParameters):
+    def pos_one_hot_input_tensor(params: ExperimentParameters):
+
+        wv_input = Input(shape=(params.sent_dim, params.wv_dim), name='wv_input')
+        pos_input = Input(shape=(params.sent_dim,), dtype='uint8', name='pos_input')
+
+        one_hot_layer = Lambda(K.one_hot,
+                               arguments={'num_classes': params.pos_dim},
+                               output_shape=(params.sent_dim, params.pos_dim))(pos_input)
+
+        concatenate_layer = Concatenate(axis=2,
+                                        name='wv_pos_concatenate')([wv_input, one_hot_layer])
+
+        return concatenate_layer, [wv_input, pos_input]
+
+    @staticmethod
+    def input_tensor(params: ExperimentParameters):
         input_layer = Input(shape=(params.sent_dim, params.wv_dim), name='input')
         return input_layer, input_layer
 
@@ -47,13 +64,15 @@ class ModelFactory:
 
     def create(self, params: ExperimentParameters):
 
-        if params.use_pos:
-            return self.create_lstm_model(params, self.lstm_pos_input_tensor)
+        if params.use_pos == 'embed':
+            return self.create_lstm_model(params, self.pos_input_tensor)
+        elif params.use_pos == 'one_hot':
+            return self.create_lstm_model(params, self.pos_one_hot_input_tensor)
         else:
-            return self.create_lstm_model(params, self.lstm_input_tensor)
+            return self.create_lstm_model(params, self.input_tensor)
 
 
 if __name__ == '__main__':
     mf = ModelFactory()
-    model = mf.create(ExperimentParameters())
+    model = mf.create(ExperimentParameters(use_pos='one_hot'))
     model.summary()

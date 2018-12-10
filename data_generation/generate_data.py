@@ -1,6 +1,6 @@
 import pandas as pd
 from tensorflow import keras
-from tensorflow.keras.datasets import imdb
+from keras.datasets import imdb
 from data_generation.PosAndParseExtractor import PosAndParseExtractor
 from time import time
 

@@ -11,7 +11,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import pandas as pd
-from tensorflow.keras.callbacks import TensorBoard
+from keras.callbacks import TensorBoard
 import math
 from tqdm import tqdm
 import gensim
@@ -50,7 +50,7 @@ class ExperimentWrapper:
 
         print(params)
 
-        # tensor_board = TensorBoard(os.path.join(ExperimentWrapper.DATA_DIRECTORY, 'logs', 'test'))
+        # tensor_board = TensorBoard(os.path.join(ExperimentWrapper.DATA_DIRECTORY, 'logs', 'test'), histogram_freq=0)
 
         # tensorboard --logdir=./logs --port 6006
         # keras.backend.get_session().run(tf.global_variables_initializer())
@@ -60,6 +60,7 @@ class ExperimentWrapper:
         model.load_weights('weights.hdf5')
 
         loss, acc = model.evaluate_generator(test_generator)
+        # ypred = model.predict_generator(test_generator)
         print('Test accuracy = %f' % acc)
         # loss, acc = model.evaluate(x, y, verbose=0)
         model.save(os.path.join(ExperimentWrapper.DATA_DIRECTORY, 'models', params.file_name()))
