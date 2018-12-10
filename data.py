@@ -20,7 +20,7 @@ class ExperimentParameters:
 
     def __init__(self, batch_size=512, wv_type='gensim-glove-100',
                  use_pos=None, use_parse=False, pos_dict_len=None, sent_dim=200, wv_dim=100,
-                 pos_dim=None, epochs=20, dropout=0.1):
+                 pos_dim=None, epochs=20, dropout=0.1, nn_model='lstm'):
         self.batch_size = batch_size
         self.wv_type = wv_type
         self.use_pos = use_pos
@@ -31,6 +31,7 @@ class ExperimentParameters:
         self.pos_dim = self.pos_dict_len if pos_dim is None else pos_dim
         self.epochs = epochs
         self.dropout = dropout
+        self.nn_model = nn_model
         self.timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')
 
     def __str__(self) -> str:
