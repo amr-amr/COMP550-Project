@@ -12,7 +12,7 @@ class ExperimentData:
         self.x_parse = x_parse
 
     @staticmethod
-    def from_df(df, text_col='text', pos_col='spacy_pos', label_col='label'):
+    def from_df(df, text_col='text', pos_col='nltk_pos', label_col='label'):
         return ExperimentData(df[text_col], df[pos_col], [], df[label_col])
 
 

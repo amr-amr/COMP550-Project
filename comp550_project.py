@@ -87,7 +87,7 @@ df_test = pd.read_pickle('df_test.pkl')
 df_train, df_dev = train_dev_split(df_train, 0.9)
 
 experiment_wrapper = ExperimentWrapper()
-exp_params = ExperimentParameters(use_pos=True, epochs=5)
+exp_params = ExperimentParameters(use_pos=True, epochs=30, pos_dict_len=PosDictionary.nltk_len)
 
 # pos_x = np.array([np.squeeze(x) for x in df_train['pos']])
 
