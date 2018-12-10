@@ -31,9 +31,9 @@ class ModelFactory:
 
         input_layer, inputs = input_func(params)
 
-        embedded_sequences = SpatialDropout1D(0.1)(input_layer)
+        embedded_sequences = SpatialDropout1D(params.dropout)(input_layer)
         x = Bidirectional(CuDNNLSTM(64, return_sequences=False))(embedded_sequences)
-        x = Dropout(0.1)(x)
+        x = Dropout(params.dropout)(x)
         x = BatchNormalization()(x)
         preds = Dense(1, activation='sigmoid')(x)
 

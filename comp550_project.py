@@ -1,5 +1,6 @@
 from model import ModelFactory
 from keras_extensions import TextSequence, ExperimentParameters, ExperimentData
+from data_generation.pos_dicts import PosDictionary
 
 import os
 from keras.layers import Dense, Input, CuDNNLSTM, Dropout, SpatialDropout1D, Bidirectional, Embedding, Concatenate
@@ -10,6 +11,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import pandas as pd
+from tensorflow.keras.callbacks import TensorBoard
 import math
 from tqdm import tqdm
 import gensim
@@ -32,18 +34,33 @@ def train_dev_split(df_train, train_percent=0.9):
 
 class ExperimentWrapper:
 
-    def __init__(self, model_filepath):
-        self.model_factory = ModelFactory()
-        self.model_filepath = model_filepath
+    DATA_DIRECTORY = os.path.join('drive', 'My Drive', 'Comp550data')
 
-    def train(self, data: ExperimentData, params: ExperimentParameters):
+    def __init__(self):
+        self.model_factory = ModelFactory()
+
+    def run(self, train_data: ExperimentData, dev_data: ExperimentData,
+              test_data: ExperimentData, params: ExperimentParameters):
         # train
         model = self.model_factory.create(params)
         model.summary()
-        training_generator = TextSequence(data, params)
+        training_generator = TextSequence(train_data, params)
+        validation_generator = TextSequence(dev_data, params)
+        test_generator = TextSequence(test_data, params)
 
         print(params)
-        hist = model.fit_generator(training_generator, epochs=params.epochs, verbose=2)
+
+        # tensor_board = TensorBoard(os.path.join(ExperimentWrapper.DATA_DIRECTORY, 'logs', 'test'))
+
+        # tensorboard --logdir=./logs --port 6006
+        # keras.backend.get_session().run(tf.global_variables_initializer())
+        hist = model.fit_generator(training_generator, epochs=params.epochs,
+                                   validation_data=validation_generator, verbose=2)
+
+        loss, acc = model.evaluate_generator(test_generator)
+        print('Test accuracy = %f' % acc)
+        # loss, acc = model.evaluate(x, y, verbose=0)
+        model.save(os.path.join(ExperimentWrapper.DATA_DIRECTORY, 'models', params.file_name()))
 
         # # plot
         # # TODO: save output somehow?
@@ -54,22 +71,32 @@ class ExperimentWrapper:
         # plt.title("Loss with pretrained word vectors");
         # plt.show();
         #
-        # # save
-        # # TODO: check if filepath exists
-        # self.model.save(self.model_filepath)
 
     def evaluate_model(self, test_data_kwargs):
         eval_generator = TextSequence(**test_data_kwargs, **self.sequence_kwargs)
         # TODO: evaluate
 
 
-df_train = pd.read_pickle('spacy_data_train.pkl')
-df_test = pd.read_pickle('spacy_data_test.pkl')
-experiment_wrapper = ExperimentWrapper('')
-exp_params = ExperimentParameters(use_pos=True)
-exp_data = ExperimentData(df_train['text'], df_train['pos'], [], df_train['label'])
+# df_train = pd.read_pickle('nltk_pos_int_dataframe.pkl')
+# df_train = pd.read_pickle('spacy_data_train.pkl')
+# df_test = pd.read_pickle('spacy_data_test.pkl')
 
-experiment_wrapper.train(exp_data, exp_params)
+df_train = pd.read_pickle('df_train.pkl')
+df_test = pd.read_pickle('df_test.pkl')
+
+df_train, df_dev = train_dev_split(df_train, 0.9)
+
+experiment_wrapper = ExperimentWrapper()
+exp_params = ExperimentParameters(use_pos=True, epochs=5)
+
+# pos_x = np.array([np.squeeze(x) for x in df_train['pos']])
+
+train_data = ExperimentData.from_df(df_train)
+dev_data = ExperimentData.from_df(df_dev)
+test_data = ExperimentData.from_df(df_test)
+
+
+experiment_wrapper.run(train_data, dev_data, test_data, exp_params)
 
 # training_generator = TextSequence(train_x, squeeze_pos_lookup, train_labels, 512)
 # hist = model.fit_generator(training_generator, epochs=20)

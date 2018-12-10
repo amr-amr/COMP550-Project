@@ -25,4 +25,4 @@ class PosDictionary:
     spacy_len = len(spacy) - 1
 
     nltk = {key: i for (i, key) in enumerate(load('help/tagsets/upenn_tagset.pickle').keys())}
-    ntlk_len = len(nltk)
+    nltk_len = len(nltk)
