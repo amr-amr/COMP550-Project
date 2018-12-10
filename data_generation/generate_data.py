@@ -26,6 +26,7 @@ test_x = [decode_review(x) for x in test_data]
 
 df = pd.DataFrame(columns=['text', 'pos', 'parse'])
 df['text'] = test_x
+df['label'] = train_labels
 
 print('Starting to parse text')
 start = time()

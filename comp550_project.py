@@ -1,3 +1,6 @@
+from model import ModelFactory
+from keras_extensions import TextSequence, ExperimentParameters, ExperimentData
+
 import os
 from keras.layers import Dense, Input, CuDNNLSTM, Dropout, SpatialDropout1D, Bidirectional, Embedding, Concatenate
 from keras.models import Model
@@ -16,11 +19,8 @@ from nltk import pos_tag
 import math
 from tensorflow import keras
 import gensim.downloader as gensim_api
-imdb = keras.datasets.imdb
-from model import ModelFactory
-from keras_modules import TextSequence, ExperimentParameters, ExperimentData
 
-# (train_x, train_labels), (test_x, test_labels) = load_data()
+imdb = keras.datasets.imdb
 
 
 def train_dev_split(df_train, train_percent=0.9):
@@ -31,7 +31,7 @@ def train_dev_split(df_train, train_percent=0.9):
 # df_train, df_dev = train_dev_split(df_train)
 
 class ExperimentWrapper:
-    # TODO: define kwargs
+
     def __init__(self, model_filepath):
         self.model_factory = ModelFactory()
         self.model_filepath = model_filepath
@@ -41,7 +41,9 @@ class ExperimentWrapper:
         model = self.model_factory.create(params)
         model.summary()
         training_generator = TextSequence(data, params)
-        hist = model.fit_generator(training_generator, params.epochs)
+
+        print(params)
+        hist = model.fit_generator(training_generator, epochs=params.epochs, verbose=2)
 
         # # plot
         # # TODO: save output somehow?
@@ -63,8 +65,11 @@ class ExperimentWrapper:
 
 df_train = pd.read_pickle('spacy_data_train.pkl')
 df_test = pd.read_pickle('spacy_data_test.pkl')
-experiment_wrapper = ExperimentWrapper()
-experiment_wrapper.train()
+experiment_wrapper = ExperimentWrapper('')
+exp_params = ExperimentParameters(use_pos=True)
+exp_data = ExperimentData(df_train['text'], df_train['pos'], [], df_train['label'])
+
+experiment_wrapper.train(exp_data, exp_params)
 
 # training_generator = TextSequence(train_x, squeeze_pos_lookup, train_labels, 512)
 # hist = model.fit_generator(training_generator, epochs=20)
