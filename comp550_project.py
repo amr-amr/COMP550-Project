@@ -21,6 +21,7 @@ from nltk import pos_tag
 import math
 from tensorflow import keras
 import gensim.downloader as gensim_api
+from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint
 imdb = keras.datasets.imdb
 
@@ -55,8 +56,10 @@ class ExperimentWrapper:
         # tensorboard --logdir=./logs --port 6006
         # keras.backend.get_session().run(tf.global_variables_initializer())
         checkpointer = ModelCheckpoint(filepath="weights.hdf5", verbose=1, save_best_only=True)
+        early_stopper = EarlyStopping(monitor='val_acc', patience=7, mode='max')
+
         hist = model.fit_generator(training_generator, epochs=params.epochs,
-                                   validation_data=validation_generator, verbose=2, callbacks=[checkpointer])
+                                   validation_data=validation_generator, verbose=2, callbacks=[checkpointer, early_stopper])
         model.load_weights('weights.hdf5')
 
         loss, acc = model.evaluate_generator(test_generator)
