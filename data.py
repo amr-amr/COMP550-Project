@@ -19,7 +19,7 @@ class ExperimentData:
 class ExperimentParameters:
 
     def __init__(self, batch_size=512, wv_type='gensim-glove-100',
-                 train_wv = False,
+                 train_wv=False,
                  use_pos=None, use_parse=False, pos_dict_len=None, sent_dim=200, wv_dim=100,
                  pos_dim=None, epochs=20, dropout=0.1, nn_model='lstm'):
         self.batch_size = batch_size
@@ -42,4 +42,4 @@ class ExperimentParameters:
                   self.pos_dim, self.dropout, self.train_wv)
 
     def file_name(self) -> str:
-        return '%s_%s' % (self.__str__().replace(' ', '').lower(), self.timestamp)
+        return self.__str__().replace(' ', '').lower()

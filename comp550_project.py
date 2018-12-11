@@ -7,6 +7,7 @@ from data_generation.pos_dicts import PosDictionary
 from keras_extensions import TextSequence, ExperimentParameters, ExperimentData
 from model import ModelFactory
 from matplotlib import pyplot as plt
+from helpers import ensure_folder_exists
 
 DATA_DIRECTORY = os.path.join('drive', 'My Drive', 'Comp550data')
 
@@ -35,9 +36,11 @@ class ExperimentWrapper:
         print(params)
 
         tensor_board = TensorBoard(os.path.join(DATA_DIRECTORY, 'logs', params.file_name()))
-        best_model_path = os.path.join(DATA_DIRECTORY, 'models', params.file_name())
+        model_folder = os.path.join(DATA_DIRECTORY, 'models', params.file_name())
+        ensure_folder_exists(model_folder)
+
         early_stopper = EarlyStopping(monitor='val_acc', patience=7, mode='max')
-        check_pointer = ModelCheckpoint(filepath=best_model_path, save_best_only=True)
+        check_pointer = ModelCheckpoint(filepath=os.path.join(model_folder, params.timestamp), save_best_only=True)
 
         hist = model.fit_generator(training_generator, epochs=params.epochs, validation_data=validation_generator,
                                    verbose=2, callbacks=[check_pointer, tensor_board, early_stopper])
@@ -50,7 +53,7 @@ class ExperimentWrapper:
         plt.show()
 
         #         model.save(best_model_path)
-        model.load_weights(best_model_path)
+        model.load_weights(check_pointer.filepath)
 
         loss, acc = model.evaluate_generator(test_generator)
         print('Test accuracy = %f' % acc)
