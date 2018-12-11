@@ -7,6 +7,7 @@ from keras_extensions import ExperimentParameters
 from keras import backend as K
 from keras.datasets import imdb
 import numpy as np
+from keras_extensions import EmbeddingsCache
 from keras.engine.topology import Layer
 
 
@@ -63,9 +64,13 @@ class ModelFactory:
     def word_index_input_tensor(params: ExperimentParameters):
         wi_input = Input(shape=(params.sent_dim,), name='word_index_input')
         word_index = WordIndexCache.get_word_index()
+        wv_cache = EmbeddingsCache.get_glove_100_model()
         pretrained_wv = 0.1 * np.ones((len(word_index), params.wv_dim))
         for word, index in word_index.items():
-            pretrained_wv[index] = word_index[word]
+            try:
+                pretrained_wv[index] = wv_cache[word]
+            except:
+                pretrained_wv[index] = np.random.random(params.wv_dim)
 
         embedding_layer = Embedding(len(word_index), params.wv_dim, input_length=params.sent_dim,
                                     embeddings_initializer='glorot_normal',
@@ -169,5 +174,5 @@ class ModelFactory:
 
 if __name__ == '__main__':
     mf = ModelFactory()
-    model = mf.create(ExperimentParameters(nn_model='cnn', use_parse='filt', use_pos='embed', use_word_index=True))
+    model = mf.create(ExperimentParameters(nn_model='cnn', use_word_index=True))
     model.summary()
