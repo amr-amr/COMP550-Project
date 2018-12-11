@@ -5,6 +5,27 @@ from keras.optimizers import Adam
 from keras.layers.normalization import BatchNormalization
 from keras_extensions import ExperimentParameters
 from keras import backend as K
+from keras.datasets import imdb
+import numpy as np
+from keras.engine.topology import Layer
+
+
+class WordIndexCache:
+    word_index = None
+
+    @staticmethod
+    def get_word_index():
+        if WordIndexCache.word_index is None:
+            word_index = imdb.get_word_index()
+            word_index = {k: (v + 3) for k, v in word_index.items()}
+            word_index["<PAD>"] = 0
+            word_index["<START>"] = 1
+            word_index["<UNK>"] = 2  # unknown
+            word_index["<UNUSED>"] = 3
+
+            WordIndexCache.word_index = word_index
+
+        return WordIndexCache.word_index
 
 
 class ModelFactory:
@@ -39,6 +60,25 @@ class ModelFactory:
         return concatenate_layer, [wv_input, pos_input]
 
     @staticmethod
+    def word_index_input_tensor(params: ExperimentParameters):
+        wi_input = Input(shape=(params.sent_dim,), name='word_index_input')
+        oov = 0
+        word_index = WordIndexCache.get_word_index()
+        pretrained_wv = 0.1 * np.ones((len(word_index), params.wv_dim))
+        for word, index in word_index.items():
+            try:
+                wv = word_index[word]
+            except:
+                wv = word_index["<UNK>"]
+                oov += 1;
+            pretrained_wv[index] = wv
+
+        embedding_layer = Embedding(len(word_index), params.wv_dim, input_length=params.sent_dim,
+                                    embeddings_initializer='glorot_normal',
+                                    name='WordEmbeddings')(wi_input)
+        return embedding_layer, wi_input
+
+    @staticmethod
     def input_tensor(params: ExperimentParameters):
         input_layer = Input(shape=(params.sent_dim, params.wv_dim), name='input')
         return input_layer, input_layer
@@ -47,6 +87,10 @@ class ModelFactory:
     def create_lstm_model(params: ExperimentParameters, input_func):
 
         input_layer, inputs = input_func(params)
+
+        if params.use_parse:
+            input_layer, filter_mat_input = ModelFactory.create_parse_filter_layer(params, input_layer)
+            inputs.append(filter_mat_input)
 
         embedded_sequences = SpatialDropout1D(params.dropout)(input_layer)
         x = Bidirectional(CuDNNLSTM(64, return_sequences=False))(embedded_sequences)
@@ -63,15 +107,27 @@ class ModelFactory:
         return model
 
     @staticmethod
+    def create_parse_filter_layer(params: ExperimentParameters, input_layer):
+        filter_mat_input = Input(shape=(params.sent_dim, params.sent_dim), name='filter_input')
+        filter_data_dim = params.wv_dim + params.pos_dim if params.use_pos else 0
+        parse_filter_layer = Lambda(lambda x: K.batch_dot(x[0], x[1]),
+                                    output_shape=(params.sent_dim, filter_data_dim))([filter_mat_input, input_layer])
+        return parse_filter_layer, filter_mat_input
+
+    @staticmethod
     def create_cnn_model(params: ExperimentParameters, input_func):
 
         # input_layer = Input(shape=(params.sent_dim, params.wv_dim), name='input')
         input_layer, inputs = input_func(params)
 
+        if params.use_parse:
+            input_layer, filter_mat_input = ModelFactory.create_parse_filter_layer(params, input_layer)
+            inputs.append(filter_mat_input)
+
         filter_sizes = (3, 8)
         num_filters = 10
         hidden_dims = 50
-        z = Dropout(0.5)(input_layer)
+        z = Dropout(params.dropout, name='dropout_input_%.2f' % params.dropout)(input_layer)
 
         conv_blocks = []
         for sz in filter_sizes:
@@ -85,7 +141,7 @@ class ModelFactory:
             conv_blocks.append(conv)
         z = Concatenate()(conv_blocks) if len(conv_blocks) > 1 else conv_blocks[0]
 
-        z = Dropout(0.8)(z)
+        z = Dropout(params.dropout, name='dropout_pred_%.2f' % params.dropout)(z)
         z = Dense(hidden_dims, activation="relu")(z)
         model_output = Dense(1, activation="sigmoid")(z)
 
@@ -98,8 +154,12 @@ class ModelFactory:
 
         if params.use_pos == 'embed':
             input_layer_func = self.pos_input_tensor
+        elif params.use_pos == 'one_hot':
+            input_layer_func = self.pos_one_hot_input_tensor
+        elif params.use_word_index:
+            input_layer_func = self.word_index_input_tensor
         else:
-            input_layer_func = self.pos_one_hot_input_tensor if params.use_pos == 'one_hot' else self.input_tensor
+            input_layer_func = self.input_tensor
 
         if params.nn_model == 'cnn':
             return self.create_cnn_model(params, input_layer_func)
@@ -109,5 +169,5 @@ class ModelFactory:
 
 if __name__ == '__main__':
     mf = ModelFactory()
-    model = mf.create(ExperimentParameters(nn_model='cnn', use_pos='embed'))
+    model = mf.create(ExperimentParameters(nn_model='lstm', use_pos='embed', use_parse=True))
     model.summary()
