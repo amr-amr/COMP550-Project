@@ -83,11 +83,7 @@ class ModelFactory:
         input_layer, inputs = pos_input_func(params, wv_input_func) if pos_input_func else wv_input_func(params)
 
         if params.use_parse:
-            input_layer, filter_mat_input = ModelFactory.create_parse_filter_layer(params, input_layer)
-            if isinstance(inputs, list):
-                inputs.append(filter_mat_input)
-            else:
-                inputs = [inputs, filter_mat_input]
+            input_layer, inputs = ModelFactory.create_parse_filter_layer(params, input_layer, inputs)
 
         embedded_sequences = SpatialDropout1D(params.dropout)(input_layer)
         x = Bidirectional(CuDNNLSTM(64, return_sequences=False))(embedded_sequences)
@@ -104,12 +100,21 @@ class ModelFactory:
         return model
 
     @staticmethod
-    def create_parse_filter_layer(params: ExperimentParameters, input_layer):
+    def create_parse_filter_layer(params: ExperimentParameters, input_layer, inputs):
         filter_mat_input = Input(shape=(params.sent_dim, params.sent_dim), name='filter_input')
         filter_data_dim = params.wv_dim + (params.pos_dim if params.use_pos else 0)
-        parse_filter_layer = Lambda(lambda x: K.batch_dot(x[0], x[1]),
+        parse_output_layer = Lambda(lambda x: K.batch_dot(x[0], x[1]),
                                     output_shape=(params.sent_dim, filter_data_dim))([filter_mat_input, input_layer])
-        return parse_filter_layer, filter_mat_input
+
+        if params.use_parse == 'concat':
+            parse_output_layer = Concatenate(axis=2,
+                                            name='parse_wv_concatenate')([input_layer, parse_output_layer])
+
+        if isinstance(inputs, list):
+            inputs.append(filter_mat_input)
+            return parse_output_layer, inputs
+
+        return parse_output_layer, [inputs, filter_mat_input]
 
     @staticmethod
     def create_cnn_model(params: ExperimentParameters, wv_input_func, pos_input_func):
@@ -118,11 +123,7 @@ class ModelFactory:
         input_layer, inputs = pos_input_func(params, wv_input_func) if pos_input_func else wv_input_func(params)
 
         if params.use_parse:
-            input_layer, filter_mat_input = ModelFactory.create_parse_filter_layer(params, input_layer)
-            if isinstance(inputs, list):
-                inputs.append(filter_mat_input)
-            else:
-                inputs = [inputs, filter_mat_input]
+            input_layer, inputs = ModelFactory.create_parse_filter_layer(params, input_layer, inputs)
 
         filter_sizes = (3, 8)
         num_filters = 10
@@ -168,5 +169,5 @@ class ModelFactory:
 
 if __name__ == '__main__':
     mf = ModelFactory()
-    model = mf.create(ExperimentParameters(nn_model='cnn'))
+    model = mf.create(ExperimentParameters(nn_model='cnn', use_parse='concat', use_pos='embed', use_word_index=True))
     model.summary()
