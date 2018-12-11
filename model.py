@@ -12,6 +12,7 @@ import numpy as np
 from keras_extensions import EmbeddingsCache
 from keras.engine.topology import Layer
 
+
 class ModelFactory:
 
     @staticmethod

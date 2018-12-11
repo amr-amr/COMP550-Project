@@ -66,7 +66,7 @@ if __name__ == '__main__':
     df_train, df_dev = train_dev_split(df_train_dev, 0.9)
 
     experiment_wrapper = ExperimentWrapper()
-    exp_params = ExperimentParameters()
+    exp_params = ExperimentParameters(use_pos='embed')
 
     train_data = ExperimentData.from_df(df_train)
     dev_data = ExperimentData.from_df(df_dev)

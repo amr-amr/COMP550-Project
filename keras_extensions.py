@@ -4,6 +4,7 @@ from keras.utils import Sequence
 
 from caching import EmbeddingsCache, WordIndexCache
 from data import ExperimentParameters, ExperimentData
+from keras.preprocessing import sequence
 
 
 class TextSequence(Sequence):
@@ -32,18 +33,18 @@ class TextSequence(Sequence):
             processed_batch_x = np.array([self.x_process(x) for x in batch_x])
 
         processed_batch_inputs = [processed_batch_x]
-        processed_batch_y = np.array([self.y_process(y) for y in batch_y])
 
         if self.params.use_pos:
             batch_pos = self.data.x_pos[batch_start:batch_end]
-            processed_batch_pos = np.array([self.pos_process(pos) for pos in batch_pos])
+            processed_batch_pos = sequence.pad_sequences(batch_pos, self.params.sent_dim, padding='post',
+                                                         truncating='post', value=(self.params.pos_dict_len - 1))
             processed_batch_inputs.append(processed_batch_pos)
         if self.params.use_parse:
             batch_parse = self.data.x_parse[batch_start:batch_end]
             processed_batch_parse = np.array([self.parse_process(parse) for parse in batch_parse])
             processed_batch_inputs.append(processed_batch_parse)
 
-        return processed_batch_inputs, processed_batch_y
+        return processed_batch_inputs, batch_y
 
     def x_process(self, text):
         wv_tensor = np.zeros((self.params.sent_dim,
@@ -65,15 +66,6 @@ class TextSequence(Sequence):
             except:
                 wi_tensor[i] = (self.word_index["<UNK>"])
         return wi_tensor
-
-    def y_process(self, y):
-        return y
-
-    def pos_process(self, sentence_pos_tags):
-        pos_tensor = (self.params.pos_dict_len - 1) * np.ones(self.params.sent_dim)
-        valid_pos_len = min(len(sentence_pos_tags), self.params.sent_dim)
-        pos_tensor[:valid_pos_len] = sentence_pos_tags[:valid_pos_len]
-        return pos_tensor
 
     ## TODO: Format
     def parse_process(self, parse):
