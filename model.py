@@ -31,23 +31,23 @@ class WordIndexCache:
 class ModelFactory:
 
     @staticmethod
-    def pos_input_tensor(params: ExperimentParameters):
+    def pos_input_tensor(params: ExperimentParameters, wv_input_func):
 
-        wv_input = Input(shape=(params.sent_dim, params.wv_dim), name='wv_input')
+        wv_input_layer, wv_input = wv_input_func(params)
         pos_input = Input(shape=(params.sent_dim,), name='pos_input')
 
         embedding_layer = Embedding(params.pos_dict_len, params.pos_dim, input_length=params.sent_dim,
                                     embeddings_initializer='glorot_normal',
                                     name='POSEmbeddings')(pos_input)
         concatenate_layer = Concatenate(axis=2,
-                                        name='wv_pos_concatenate')([wv_input, embedding_layer])
+                                        name='wv_pos_concatenate')([wv_input_layer, embedding_layer])
 
         return concatenate_layer, [wv_input, pos_input]
 
     @staticmethod
-    def pos_one_hot_input_tensor(params: ExperimentParameters):
+    def pos_one_hot_input_tensor(params: ExperimentParameters, wv_input_func):
 
-        wv_input = Input(shape=(params.sent_dim, params.wv_dim), name='wv_input')
+        wv_input_layer, wv_input = wv_input_func(params)
         pos_input = Input(shape=(params.sent_dim,), dtype='uint8', name='pos_input')
 
         one_hot_layer = Lambda(K.one_hot,
@@ -55,23 +55,17 @@ class ModelFactory:
                                output_shape=(params.sent_dim, params.pos_dim))(pos_input)
 
         concatenate_layer = Concatenate(axis=2,
-                                        name='wv_pos_concatenate')([wv_input, one_hot_layer])
+                                        name='wv_pos_concatenate')([wv_input_layer, one_hot_layer])
 
         return concatenate_layer, [wv_input, pos_input]
 
     @staticmethod
     def word_index_input_tensor(params: ExperimentParameters):
         wi_input = Input(shape=(params.sent_dim,), name='word_index_input')
-        oov = 0
         word_index = WordIndexCache.get_word_index()
         pretrained_wv = 0.1 * np.ones((len(word_index), params.wv_dim))
         for word, index in word_index.items():
-            try:
-                wv = word_index[word]
-            except:
-                wv = word_index["<UNK>"]
-                oov += 1
-            pretrained_wv[index] = wv
+            pretrained_wv[index] = word_index[word]
 
         embedding_layer = Embedding(len(word_index), params.wv_dim, input_length=params.sent_dim,
                                     embeddings_initializer='glorot_normal',
@@ -84,9 +78,9 @@ class ModelFactory:
         return input_layer, input_layer
 
     @staticmethod
-    def create_lstm_model(params: ExperimentParameters, input_func):
+    def create_lstm_model(params: ExperimentParameters, wv_input_func, pos_input_func):
 
-        input_layer, inputs = input_func(params)
+        input_layer, inputs = pos_input_func(params, wv_input_func) if pos_input_func else wv_input_func(params)
 
         if params.use_parse:
             input_layer, filter_mat_input = ModelFactory.create_parse_filter_layer(params, input_layer)
@@ -118,10 +112,10 @@ class ModelFactory:
         return parse_filter_layer, filter_mat_input
 
     @staticmethod
-    def create_cnn_model(params: ExperimentParameters, input_func):
+    def create_cnn_model(params: ExperimentParameters, wv_input_func, pos_input_func):
 
         # input_layer = Input(shape=(params.sent_dim, params.wv_dim), name='input')
-        input_layer, inputs = input_func(params)
+        input_layer, inputs = pos_input_func(params, wv_input_func) if pos_input_func else wv_input_func(params)
 
         if params.use_parse:
             input_layer, filter_mat_input = ModelFactory.create_parse_filter_layer(params, input_layer)
@@ -158,22 +152,21 @@ class ModelFactory:
 
     def create(self, params: ExperimentParameters):
 
+        pos_input_func = None
         if params.use_pos == 'embed':
-            input_layer_func = self.pos_input_tensor
+            pos_input_func = self.pos_input_tensor
         elif params.use_pos == 'one_hot':
-            input_layer_func = self.pos_one_hot_input_tensor
-        elif params.use_word_index:
-            input_layer_func = self.word_index_input_tensor
-        else:
-            input_layer_func = self.input_tensor
+            pos_input_func = self.pos_one_hot_input_tensor
+
+        wv_input_func = self.word_index_input_tensor if params.use_word_index else self.input_tensor
 
         if params.nn_model == 'cnn':
-            return self.create_cnn_model(params, input_layer_func)
+            return self.create_cnn_model(params, wv_input_func, pos_input_func)
         else:
-            return self.create_lstm_model(params, input_layer_func)
+            return self.create_lstm_model(params, wv_input_func, pos_input_func)
 
 
 if __name__ == '__main__':
     mf = ModelFactory()
-    model = mf.create(ExperimentParameters(nn_model='cnn', use_parse=True, use_word_index=True))
+    model = mf.create(ExperimentParameters(nn_model='cnn'))
     model.summary()
