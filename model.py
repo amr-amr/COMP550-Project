@@ -70,7 +70,7 @@ class ModelFactory:
                 wv = word_index[word]
             except:
                 wv = word_index["<UNK>"]
-                oov += 1;
+                oov += 1
             pretrained_wv[index] = wv
 
         embedding_layer = Embedding(len(word_index), params.wv_dim, input_length=params.sent_dim,
@@ -90,7 +90,10 @@ class ModelFactory:
 
         if params.use_parse:
             input_layer, filter_mat_input = ModelFactory.create_parse_filter_layer(params, input_layer)
-            inputs.append(filter_mat_input)
+            if isinstance(inputs, list):
+                inputs.append(filter_mat_input)
+            else:
+                inputs = [inputs, filter_mat_input]
 
         embedded_sequences = SpatialDropout1D(params.dropout)(input_layer)
         x = Bidirectional(CuDNNLSTM(64, return_sequences=False))(embedded_sequences)
@@ -109,7 +112,7 @@ class ModelFactory:
     @staticmethod
     def create_parse_filter_layer(params: ExperimentParameters, input_layer):
         filter_mat_input = Input(shape=(params.sent_dim, params.sent_dim), name='filter_input')
-        filter_data_dim = params.wv_dim + params.pos_dim if params.use_pos else 0
+        filter_data_dim = params.wv_dim + (params.pos_dim if params.use_pos else 0)
         parse_filter_layer = Lambda(lambda x: K.batch_dot(x[0], x[1]),
                                     output_shape=(params.sent_dim, filter_data_dim))([filter_mat_input, input_layer])
         return parse_filter_layer, filter_mat_input
@@ -122,7 +125,10 @@ class ModelFactory:
 
         if params.use_parse:
             input_layer, filter_mat_input = ModelFactory.create_parse_filter_layer(params, input_layer)
-            inputs.append(filter_mat_input)
+            if isinstance(inputs, list):
+                inputs.append(filter_mat_input)
+            else:
+                inputs = [inputs, filter_mat_input]
 
         filter_sizes = (3, 8)
         num_filters = 10
@@ -169,5 +175,5 @@ class ModelFactory:
 
 if __name__ == '__main__':
     mf = ModelFactory()
-    model = mf.create(ExperimentParameters(nn_model='lstm', use_pos='embed', use_parse=True))
+    model = mf.create(ExperimentParameters(nn_model='cnn', use_parse=True, use_word_index=True))
     model.summary()
