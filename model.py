@@ -3,31 +3,14 @@ from keras.layers import Dense, Input, CuDNNLSTM, Dropout, SpatialDropout1D, Bid
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.layers.normalization import BatchNormalization
+
+from caching import WordIndexCache
 from keras_extensions import ExperimentParameters
 from keras import backend as K
 from keras.datasets import imdb
 import numpy as np
 from keras_extensions import EmbeddingsCache
 from keras.engine.topology import Layer
-
-
-class WordIndexCache:
-    word_index = None
-
-    @staticmethod
-    def get_word_index():
-        if WordIndexCache.word_index is None:
-            word_index = imdb.get_word_index()
-            word_index = {k: (v + 3) for k, v in word_index.items()}
-            word_index["<PAD>"] = 0
-            word_index["<START>"] = 1
-            word_index["<UNK>"] = 2  # unknown
-            word_index["<UNUSED>"] = 3
-
-            WordIndexCache.word_index = word_index
-
-        return WordIndexCache.word_index
-
 
 class ModelFactory:
 
@@ -164,7 +147,7 @@ class ModelFactory:
         elif params.use_pos == 'one_hot':
             pos_input_func = self.pos_one_hot_input_tensor
 
-        wv_input_func = self.word_index_input_tensor if params.use_word_index else self.input_tensor
+        wv_input_func = self.word_index_input_tensor if params.train_wv else self.input_tensor
 
         if params.nn_model == 'cnn':
             return self.create_cnn_model(params, wv_input_func, pos_input_func)
@@ -174,5 +157,5 @@ class ModelFactory:
 
 if __name__ == '__main__':
     mf = ModelFactory()
-    model = mf.create(ExperimentParameters(nn_model='cnn', use_word_index=True))
+    model = mf.create(ExperimentParameters(nn_model='cnn', train_wv=True))
     model.summary()

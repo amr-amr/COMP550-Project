@@ -1,108 +1,72 @@
-from model import ModelFactory
-from keras_extensions import TextSequence, ExperimentParameters, ExperimentData
-from data_generation.pos_dicts import PosDictionary
-
 import os
-from keras.layers import Dense, Input, CuDNNLSTM, Dropout, SpatialDropout1D, Bidirectional, Embedding, Concatenate
-from keras.models import Model
-from keras.optimizers import Adam
-from keras.layers.normalization import BatchNormalization
-import tensorflow as tf
-import numpy as np
-import os
+from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
+import copy
 import pandas as pd
-from keras.callbacks import TensorBoard
-import math
-from tqdm import tqdm
-import gensim
-import spacy
-from keras.utils import Sequence
-from nltk import pos_tag
-import math
-from tensorflow import keras
-import gensim.downloader as gensim_api
-from keras.callbacks import EarlyStopping
-from keras.callbacks import ModelCheckpoint
-imdb = keras.datasets.imdb
+
+from data_generation.pos_dicts import PosDictionary
+from keras_extensions import TextSequence, ExperimentParameters, ExperimentData
+from model import ModelFactory
+from matplotlib import pyplot as plt
+
+DATA_DIRECTORY = os.path.join('drive', 'My Drive', 'Comp550data')
 
 
-def train_dev_split(df_train, train_percent=0.9):
-    nb_train = int(len(df_train) * train_percent)
-    return df_train[:nb_train], df_train[nb_train:]
+def train_dev_split(df_train_dev, train_percent=0.9):
+    nb_train = int(len(df_train_dev) * train_percent)
+    return df_train_dev[:nb_train], df_train_dev[nb_train:]
 
-
-# df_train, df_dev = train_dev_split(df_train)
 
 class ExperimentWrapper:
-
-    DATA_DIRECTORY = os.path.join('drive', 'My Drive', 'Comp550data')
 
     def __init__(self):
         self.model_factory = ModelFactory()
 
     def run(self, train_data: ExperimentData, dev_data: ExperimentData,
-              test_data: ExperimentData, params: ExperimentParameters):
-        # train
+            test_data: ExperimentData, params: ExperimentParameters):
         model = self.model_factory.create(params)
         model.summary()
         training_generator = TextSequence(train_data, params)
-        validation_generator = TextSequence(dev_data, params)
+        validation_params = copy.deepcopy(params)
+        validation_params.batch_size = len(dev_data.x)
+        validation_generator = TextSequence(dev_data, validation_params)
         test_generator = TextSequence(test_data, params)
 
+        print("Running experiment:")
         print(params)
 
-        # tensor_board = TensorBoard(os.path.join(ExperimentWrapper.DATA_DIRECTORY, 'logs', 'test'), histogram_freq=0)
-
-        # tensorboard --logdir=./logs --port 6006
-        # keras.backend.get_session().run(tf.global_variables_initializer())
-        checkpointer = ModelCheckpoint(filepath="weights.hdf5", verbose=1, save_best_only=True)
+        tensor_board = TensorBoard(os.path.join(DATA_DIRECTORY, 'logs', params.file_name()))
+        best_model_path = os.path.join(DATA_DIRECTORY, 'models', params.file_name())
         early_stopper = EarlyStopping(monitor='val_acc', patience=7, mode='max')
+        check_pointer = ModelCheckpoint(filepath=best_model_path, save_best_only=True)
 
-        hist = model.fit_generator(training_generator, epochs=params.epochs,
-                                   validation_data=validation_generator, verbose=2, callbacks=[checkpointer, early_stopper])
-        model.load_weights('weights.hdf5')
+        hist = model.fit_generator(training_generator, epochs=params.epochs, validation_data=validation_generator,
+                                   verbose=2, callbacks=[check_pointer, tensor_board, early_stopper])
+
+        history = pd.DataFrame(hist.history)
+        plt.figure(figsize=(12, 12))
+        plt.plot(history["acc"])
+        plt.plot(history["val_acc"])
+        plt.title("Accuracy with pretrained word vectors")
+        plt.show()
+
+        #         model.save(best_model_path)
+        model.load_weights(best_model_path)
 
         loss, acc = model.evaluate_generator(test_generator)
-        # ypred = model.predict_generator(test_generator)
         print('Test accuracy = %f' % acc)
-        # loss, acc = model.evaluate(x, y, verbose=0)
-        model.save(os.path.join(ExperimentWrapper.DATA_DIRECTORY, 'models', params.file_name()))
-
-        # # plot
-        # # TODO: save output somehow?
-        # history = pd.DataFrame(hist.history)
-        # plt.figure(figsize=(12, 12));
-        # plt.plot(history["loss"]);
-        # plt.plot(history["val_loss"]);
-        # plt.title("Loss with pretrained word vectors");
-        # plt.show();
-        #
-
-    def evaluate_model(self, test_data_kwargs):
-        eval_generator = TextSequence(**test_data_kwargs, **self.sequence_kwargs)
-        # TODO: evaluate
 
 
-# df_train = pd.read_pickle('nltk_pos_int_dataframe.pkl')
-# df_train = pd.read_pickle('spacy_data_train.pkl')
-# df_test = pd.read_pickle('spacy_data_test.pkl')
+if __name__ == '__main__':
+    df_train_dev = pd.read_pickle('df_train.pkl')
+    df_test = pd.read_pickle('df_test.pkl')
 
-df_train = pd.read_pickle('df_train.pkl')
-df_test = pd.read_pickle('df_test.pkl')
+    df_train, df_dev = train_dev_split(df_train_dev, 0.9)
 
-df_train, df_dev = train_dev_split(df_train, 0.9)
+    experiment_wrapper = ExperimentWrapper()
+    exp_params = ExperimentParameters()
 
-experiment_wrapper = ExperimentWrapper()
-exp_params = ExperimentParameters(use_pos=True, epochs=30, pos_dict_len=PosDictionary.nltk_len)
+    train_data = ExperimentData.from_df(df_train)
+    dev_data = ExperimentData.from_df(df_dev)
+    test_data = ExperimentData.from_df(df_test)
 
-# pos_x = np.array([np.squeeze(x) for x in df_train['pos']])
-
-train_data = ExperimentData.from_df(df_train)
-dev_data = ExperimentData.from_df(df_dev)
-test_data = ExperimentData.from_df(df_test)
-
-
-experiment_wrapper.run(train_data, dev_data, test_data, exp_params)
-
-# training_generator = TextSequence(train_x, squeeze_pos_lookup, train_labels, 512)
-# hist = model.fit_generator(training_generator, epochs=20)
+    experiment_wrapper.run(train_data, dev_data, test_data, exp_params)

@@ -12,17 +12,19 @@ class ExperimentData:
         self.x_parse = x_parse
 
     @staticmethod
-    def from_df(df, text_col='text', pos_col='nltk_pos', label_col='label'):
-        return ExperimentData(df[text_col], df[pos_col], [], df[label_col])
+    def from_df(df, text_col='text', pos_col='spacy_pos', label_col='label'):
+        return ExperimentData(df[text_col], df[pos_col], df['parse'], df[label_col])
 
 
 class ExperimentParameters:
 
     def __init__(self, batch_size=512, wv_type='gensim-glove-100',
+                 train_wv = False,
                  use_pos=None, use_parse=False, pos_dict_len=None, sent_dim=200, wv_dim=100,
-                 pos_dim=None, epochs=20, dropout=0.1, nn_model='lstm', use_word_index=False):
+                 pos_dim=None, epochs=20, dropout=0.1, nn_model='lstm'):
         self.batch_size = batch_size
         self.wv_type = wv_type
+        self.train_wv = train_wv
         self.use_pos = use_pos
         self.use_parse = use_parse
         self.sent_dim = sent_dim
@@ -32,14 +34,12 @@ class ExperimentParameters:
         self.epochs = epochs
         self.dropout = dropout
         self.nn_model = nn_model
-        self.use_word_index = use_word_index
         self.timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')
 
     def __str__(self) -> str:
-        return "batch_size=%s wv_type=%s use_pos=%s use_parse=%s sent_dim=%d wv_dim=%d pos_dim=%d epochs=%d" \
-               % (self.batch_size, self.wv_type, self.use_pos, self.use_parse, self.sent_dim,
-                  self.wv_dim, self.pos_dim, self.epochs)
+        return "nn_model=%s batch_size=%s use_pos=%s use_parse=%s sent_dim=%d pos_dim=%d dropout=%.2f train_wv=%s" \
+               % (self.nn_model, self.batch_size, self.use_pos, self.use_parse, self.sent_dim,
+                  self.pos_dim, self.dropout, self.train_wv)
 
-    # TODO: extension?
     def file_name(self) -> str:
         return '%s_%s' % (self.__str__().replace(' ', '').lower(), self.timestamp)
