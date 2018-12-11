@@ -15,12 +15,14 @@ class PosAndParseExtractor:
     def parse_text(self, text):
         spacy_pos_tags = []
         parse_tree = []
+        spacy_text = []
 
         if self.counter % 100 == 0:
             print(self.counter)
 
         doc = self.nlp(text)
         for token in doc:
+            spacy_text.append(token.lemma_)
             # parse pos tags
             pos_tag = token.pos_
             try:
@@ -33,10 +35,9 @@ class PosAndParseExtractor:
             dep_and_head = (token.dep_, token.head.i)
             parse_tree.append(dep_and_head)
 
-        nltk_pos_tags = [self.nltk_pos_dict[pos] for (word, pos) in pos_tagger(text.split())]
-
+        nltk_pos_tags = [self.nltk_pos_dict[pos] for (word, pos) in pos_tagger(spacy_text)]
         self.counter = self.counter + 1
-        return spacy_pos_tags, nltk_pos_tags, parse_tree
+        return spacy_text, spacy_pos_tags, nltk_pos_tags, parse_tree
 
 
 if __name__ == '__main__':

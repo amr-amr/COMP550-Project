@@ -27,20 +27,24 @@ def load_data():
 
 
 extractor = PosAndParseExtractor("en_core_web_md")
-for (x, y), partition in zip(load_data(), ('train', 'test')):
+(train_x, train_labels), (test_x, test_labels) = load_data()
 
-    df = pd.DataFrame(columns=['text', 'spacy_pos', 'nltk_pos', 'parse', 'label'])
-    df['text'] = x
-    df['label'] = y
+train_x = train_x
+train_labels = train_labels
 
-    print('Starting to parse %s partition' % partition)
-    start = time()
-    df[['spacy_pos', 'nltk_pos', 'parse']] = df.apply(lambda row: extractor.parse_text(row['text']), axis=1, result_type='expand')
-    print(time() - start)
+df = pd.DataFrame(columns=['text', 'spacy_text', 'spacy_pos', 'nltk_pos', 'parse', 'label'])
+df['text'] = train_x
+df['label'] = train_labels
 
-    df.to_pickle('df_%s.pkl' % partition)
+print('Starting to parse %s partition' % 'train')
+start = time()
+df[['spacy_text', 'spacy_pos', 'nltk_pos', 'parse']] = df.apply(lambda row: extractor.parse_text(row['text']),
+                                                                axis=1, result_type='expand')
+print(time() - start)
+#
+df.to_pickle('df_%s.pkl' % 'train')
 
 pkl_train = pd.read_pickle('df_train.pkl')
 pkl_train.info(memory_usage='deep')
-pkl_test = pd.read_pickle('df_test.pkl')
-pkl_test.info(memory_usage='deep')
+# pkl_test = pd.read_pickle('df_test.pkl')
+# pkl_test.info(memory_usage='deep')
