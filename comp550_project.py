@@ -39,17 +39,17 @@ class ExperimentWrapper:
         model_folder = os.path.join(DATA_DIRECTORY, 'models', params.file_name())
         ensure_folder_exists(model_folder)
 
-        early_stopper = EarlyStopping(monitor='val_acc', patience=7, mode='max')
+        # early_stopper = EarlyStopping(monitor='val_acc', patience=7, mode='max')
         check_pointer = ModelCheckpoint(filepath=os.path.join(model_folder, params.timestamp), save_best_only=True)
 
         hist = model.fit_generator(training_generator, epochs=params.epochs, validation_data=validation_generator,
-                                   verbose=2, callbacks=[check_pointer, tensor_board, early_stopper])
+                                   verbose=2, callbacks=[check_pointer, tensor_board])
 
         history = pd.DataFrame(hist.history)
         plt.figure(figsize=(12, 12))
         plt.plot(history["acc"])
         plt.plot(history["val_acc"])
-        plt.title("Accuracy with pretrained word vectors")
+        plt.title(params.__str__())
         plt.show()
 
         #         model.save(best_model_path)
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     df_train, df_dev = train_dev_split(df_train_dev, 0.9)
 
     experiment_wrapper = ExperimentWrapper()
-    exp_params = ExperimentParameters(use_pos='embed')
+    exp_params = ExperimentParameters(dropout=0.5, epochs=10, batch_size=128)
 
     train_data = ExperimentData.from_df(df_train)
     dev_data = ExperimentData.from_df(df_dev)

@@ -57,8 +57,8 @@ class ModelFactory:
                 pretrained_wv[index] = np.random.random(params.wv_dim)
 
         embedding_layer = Embedding(len(word_index), params.wv_dim, input_length=params.sent_dim,
-                                    embeddings_initializer='glorot_normal',
-                                    name='WordEmbeddings')(wi_input)
+                                    embeddings_initializer='glorot_normal', weights=[pretrained_wv],
+                                    trainable=params.train_wv, name='WordEmbeddings')(wi_input)
         return embedding_layer, wi_input
 
     @staticmethod
@@ -148,7 +148,7 @@ class ModelFactory:
         elif params.use_pos == 'one_hot':
             pos_input_func = self.pos_one_hot_input_tensor
 
-        wv_input_func = self.word_index_input_tensor if params.train_wv else self.input_tensor
+        wv_input_func = self.word_index_input_tensor # if params.train_wv else self.input_tensor
 
         if params.nn_model == 'cnn':
             return self.create_cnn_model(params, wv_input_func, pos_input_func)

@@ -27,12 +27,13 @@ class TextSequence(Sequence):
         batch_y = self.data.y[batch_start:batch_end]
 
         # process batches
-        if self.params.train_wv:
-            processed_batch_x = np.array([self.word_index_process(x) for x in batch_x])
-        else:
-            processed_batch_x = np.array([self.x_process(x) for x in batch_x])
-
+        processed_batch_x = np.array([self.word_index_process(x) for x in batch_x])
         processed_batch_inputs = [processed_batch_x]
+
+        # if self.params.train_wv:
+        #     processed_batch_x = np.array([self.word_index_process(x) for x in batch_x])
+        # else:
+        #     processed_batch_x = np.array([self.x_process(x) for x in batch_x])
 
         if self.params.use_pos:
             batch_pos = self.data.x_pos[batch_start:batch_end]
