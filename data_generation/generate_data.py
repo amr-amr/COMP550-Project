@@ -27,24 +27,21 @@ def load_data():
 
 
 extractor = PosAndParseExtractor("en_core_web_md")
-(train_x, train_labels), (test_x, test_labels) = load_data()
-
-train_x = train_x
-train_labels = train_labels
+_, (test_x, test_labels) = load_data()
 
 df = pd.DataFrame(columns=['text', 'spacy_text', 'spacy_pos', 'nltk_pos', 'parse', 'label'])
-df['text'] = train_x
-df['label'] = train_labels
+df['text'] = test_x
+df['label'] = test_labels
 
-print('Starting to parse %s partition' % 'train')
+print('Starting to parse %s partition' % 'test')
 start = time()
 df[['spacy_text', 'spacy_pos', 'nltk_pos', 'parse']] = df.apply(lambda row: extractor.parse_text(row['text']),
                                                                 axis=1, result_type='expand')
 print(time() - start)
 #
-df.to_pickle('df_%s.pkl' % 'train')
-
-pkl_train = pd.read_pickle('df_train.pkl')
-pkl_train.info(memory_usage='deep')
+df.to_pickle('df_test.pkl')
+df.info(memory_usage='deep')
+pkl_test = pd.read_pickle('data_generation/df_test_new.pkl')
+pkl_test.info(memory_usage='deep')
 # pkl_test = pd.read_pickle('df_test.pkl')
 # pkl_test.info(memory_usage='deep')

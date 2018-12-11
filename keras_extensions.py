@@ -68,7 +68,6 @@ class TextSequence(Sequence):
                 wi_tensor[i] = (self.word_index["<UNK>"])
         return wi_tensor
 
-    ## TODO: Format
     def parse_process(self, parse):
         parse_tensor = np.eye(self.params.sent_dim)
         for i, dep in zip(range(self.params.sent_dim), parse):

@@ -9,6 +9,8 @@ spacy_data_training.pkl
 spacy_data_train.pkl
 df_test.pkl
 df_train.pkl
+df_test_new.pkl
+df_train_new.pkl
 
 model_cnn.hdf5
 glove.6B.100d.txt
