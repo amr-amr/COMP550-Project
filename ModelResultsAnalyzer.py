@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 
 
+
+
 class ModelResultsAnalyzer:
     def __init__(self, pred_df, labels, true_y_col, model_pred_cols):
         self.df = pred_df
@@ -10,7 +12,7 @@ class ModelResultsAnalyzer:
         self.model_pred_cols = model_pred_cols
         self.df_counts = self._create_df_counts()
         self.df_cm_dict = self._create_df_cm_dict()
-
+        # TODO: prevent recalculation of comparison df each time?
 
 
     def _create_df_counts(self):
@@ -86,20 +88,55 @@ class ModelResultsAnalyzer:
 
         return metrics
 
-    def get_samples(self, text_col, model, true_y, pred_y):
-        df = self.df_counts
+    def get_samples(self, text_col, model, true_y, pred_y, baseline_model = None):
+        if baseline_model is not None:
+            df = self._create_comparison_df(baseline_model, model)
+        else:
+            df = self.df_counts
         true_l = "true_"+true_y
         pred_l = "pred_"+pred_y
         return self.df[text_col].loc[df[model][true_l][pred_l] == 1].tolist()
 
+    def _create_comparison_df(self, baseline_model, model):
+        df = self.df_counts
+        df['same_pred'] = True
+        for i,r in df.iterrows():
+            if r[baseline_model].tolist() != r[model].tolist():
+                df.loc[i, 'same_pred'] = False
+        df = df.loc[df['same_pred'] == False]
+        return df
 
+    def _create_comparison_df_cm(self, baseline_model, model):
+        # create rows and columns of confusion matrix
+        rows = ["true_"+l for l in self.labels]
+        rows.append("total")
+        cols = ["pred_"+l for l in self.labels]
+        cols.append("total")
+
+        # get comparison df
+        df = self._create_comparison_df(baseline_model, model)
+
+        # create confusion matrix
+        cm = pd.DataFrame(0, index=rows, columns=cols)
+        for l_true in self.labels:
+            row = "true_"+l_true
+            for l_pred in self.labels:
+                col = "pred_"+l_pred
+                count = df[model][row][col].sum() - df[baseline_model][row][col].sum()
+                cm.loc[row, col] = count
+
+                # increment total
+                cm.loc["total", col] += count
+                cm.loc[row,"total"] += count
+
+        return cm
 
 
 if __name__ == '__main__':
     df = pd.DataFrame()
     a, b, c = "good", "bad", "neutral"
     true = [a,b,b,a,c,b,a,a,a,b]
-    pred = [a,c,b,a,b,b,a,a,a,b]
+    pred = [b,b,b,b,b,b,b,c,c,a]
     text = true
 
     df['text'] = text
@@ -116,4 +153,6 @@ if __name__ == '__main__':
     print(mra.get_samples("text", "pred_1", true_y=a, pred_y=a))
     print(mra.get_samples("text", "pred_2", true_y=a, pred_y=a))
     print(mra.get_samples("text", "pred_1", true_y=c, pred_y=a))
+    print(mra._create_comparison_df_cm("pred_1", "pred_2"))
+
 
