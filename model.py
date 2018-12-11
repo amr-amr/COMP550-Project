@@ -104,11 +104,12 @@ class ModelFactory:
         filter_mat_input = Input(shape=(params.sent_dim, params.sent_dim), name='filter_input')
         filter_data_dim = params.wv_dim + (params.pos_dim if params.use_pos else 0)
         parse_output_layer = Lambda(lambda x: K.batch_dot(x[0], x[1]),
-                                    output_shape=(params.sent_dim, filter_data_dim))([filter_mat_input, input_layer])
+                                    output_shape=(params.sent_dim, filter_data_dim),
+                                    name='parse_layer')([filter_mat_input, input_layer])
 
         if params.use_parse == 'concat':
             parse_output_layer = Concatenate(axis=2,
-                                            name='parse_wv_concatenate')([input_layer, parse_output_layer])
+                                             name='parse_wv_concatenate')([input_layer, parse_output_layer])
 
         if isinstance(inputs, list):
             inputs.append(filter_mat_input)
@@ -146,7 +147,6 @@ class ModelFactory:
         z = Dense(hidden_dims, activation="relu")(z)
         model_output = Dense(1, activation="sigmoid")(z)
 
-        # model = Model(input_layer, model_output)
         model = Model(inputs=inputs, outputs=model_output)
         model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
         return model
@@ -169,5 +169,5 @@ class ModelFactory:
 
 if __name__ == '__main__':
     mf = ModelFactory()
-    model = mf.create(ExperimentParameters(nn_model='cnn', use_parse='concat', use_pos='embed', use_word_index=True))
+    model = mf.create(ExperimentParameters(nn_model='cnn', use_parse='filt', use_pos='embed', use_word_index=True))
     model.summary()
