@@ -18,6 +18,7 @@ from keras.datasets import imdb
 from nltk import pos_tag as pos_tagger
 from caching import PosDictionary
 from constants import DATA_DIRECTORY
+from caching import WordIndexCache
 
 
 class LinguisticDataExtractor:
@@ -77,8 +78,16 @@ def load_imdb_dataset():
     return (train_x, train_labels), (test_x, test_labels)
 
 
-def preprocess_imdb_dataset(output_dir, spacy_model):
-    extractor = LinguisticDataExtractor(spacy_model)
+def extract_linguistic_data(force_reload=False):
+    test_df_file = os.path.join(DATA_DIRECTORY, 'df_test.pkl')
+    train_df_file = os.path.join(DATA_DIRECTORY, 'df_train.pkl')
+
+    if not force_reload and os.path.exists(test_df_file) and os.path.exists(train_df_file):
+        print('Data %s, %s already exists' % (test_df_file, train_df_file))
+        return pd.read_pickle('df_train.pkl'), pd.read_pickle('df_test.pkl')
+
+    extractor = LinguisticDataExtractor('en_core_web_md')
+    df_results = []
     for (x, y), partition in zip(load_imdb_dataset(), ('train', 'test')):
         df = pd.DataFrame(columns=['text', 'spacy_text', 'spacy_pos', 'nltk_pos', 'parse', 'label'])
         df['text'] = x
@@ -90,10 +99,25 @@ def preprocess_imdb_dataset(output_dir, spacy_model):
                                                                         axis=1,
                                                                         result_type='expand')
         print('Took %d to parse %s set' % (time() - start, partition))
-        output_file = os.path.join(output_dir, 'df_%s.pkl' % partition)
+        output_file = os.path.join(DATA_DIRECTORY, 'df_%s.pkl' % partition)
         print('Saving %s set to %s' % (partition, output_file))
         df.to_pickle(output_file)
+        df_results.append(df)
+
+    return df_results[0], df_results[1]
+
+
+def preprocess_dataset():
+    df_train, df_test = extract_linguistic_data()
+
+    if WordIndexCache.get_word_index() is not None:
+        return df_train, df_test
+
+    print('Assigning indices to all words...')
+    all_text = list(df_train['spacy_text']) + list(df_test['spacy_text'])
+    WordIndexCache.initialize(all_text)
+    return df_train, df_test
 
 
 if __name__ == '__main__':
-    preprocess_imdb_dataset(DATA_DIRECTORY, "en_core_web_md")
+    preprocess_dataset()

@@ -19,6 +19,7 @@ from matplotlib import pyplot as plt
 from dtos import ExperimentData, ExperimentParameters
 from helpers import ensure_folder_exists
 from results_analysis import ModelResultsAnalyzer
+from data_preprocessing import preprocess_dataset
 import numpy as np
 
 
@@ -72,9 +73,9 @@ class ExperimentWrapper:
 
         # Evaluate test set
         model.load_weights(check_pointer.filepath)
-        self.evaluate_test_set(model, params, results_folder)
+        self.evaluate_test_set(model, test_data, params, results_folder)
 
-    def evaluate_test_set(self, model, params: ExperimentParameters, results_folder):
+    def evaluate_test_set(self, model, test_data: ExperimentData, params: ExperimentParameters, results_folder):
         test_generator = TextSequence(test_data, params)
         test_df = test_data.df
         y_pred = np.round(model.predict_generator(test_generator))
@@ -95,16 +96,12 @@ class ExperimentWrapper:
 
 
 if __name__ == '__main__':
-    df_train_dev = pd.read_pickle('df_train.pkl')
-    df_test = pd.read_pickle('df_test.pkl')
-
+    df_train_dev, df_test = preprocess_dataset()
     df_train, df_dev = train_dev_split(df_train_dev, 0.9)
 
     experiment_wrapper = ExperimentWrapper()
     exp_params = ExperimentParameters(dropout=0.5, epochs=10, batch_size=128)
 
-    train_data = ExperimentData.from_df(df_train)
-    dev_data = ExperimentData.from_df(df_dev)
-    test_data = ExperimentData.from_df(df_test)
-
-    experiment_wrapper.run(train_data, dev_data, test_data, exp_params)
+    experiment_wrapper.run(ExperimentData.from_df(df_train),
+                           ExperimentData.from_df(df_dev),
+                           ExperimentData.from_df(df_test), exp_params)

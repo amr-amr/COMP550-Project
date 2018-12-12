@@ -63,10 +63,9 @@ class WordIndexCache:
         return WordIndexCache.word_index
 
     @staticmethod
-    def initialize(train_text, test_text):
-        all_text = train_text + test_text
+    def initialize(text):
         tokenizer = Tokenizer(lower=False, oov_token='<OOV>')
-        tokenizer.fit_on_texts(all_text)
+        tokenizer.fit_on_texts(text)
         WordIndexCache._word_index = tokenizer
 
         save_pickle(os.path.join(DATA_DIRECTORY, WordIndexCache._word_index_file), WordIndexCache._word_index)
