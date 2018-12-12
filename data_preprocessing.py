@@ -78,7 +78,7 @@ def load_imdb_dataset():
     return (train_x, train_labels), (test_x, test_labels)
 
 
-def preprocess_dataset(train_df_file, test_df_file, force_reload=False):
+def load_data(train_df_file, test_df_file, force_reload=False):
     train_df_path = os.path.join(DATA_DIRECTORY, train_df_file)
     test_df_path = os.path.join(DATA_DIRECTORY, test_df_file)
 
@@ -108,4 +108,4 @@ def preprocess_dataset(train_df_file, test_df_file, force_reload=False):
 
 
 if __name__ == '__main__':
-    preprocess_dataset('df_train.pkl', 'df_test.pkl')
+    load_data('df_train.pkl', 'df_test.pkl')

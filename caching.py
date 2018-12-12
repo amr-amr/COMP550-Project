@@ -17,6 +17,10 @@ from nltk import load
 from constants import DATA_DIRECTORY
 from helpers import save_pickle, load_pickle
 import gensim.downloader as gensim_api
+import numpy as np
+
+
+np.random.seed(250)
 
 
 class PosDictionary:
@@ -92,6 +96,8 @@ class EmbeddingsCache:
     _embedding_file = 'wv_embeddings.plk'
     _embeddings_model = None
 
+    _init_embeddings_cache = {}
+
     @staticmethod
     def get_wv_embeddings():
 
@@ -107,3 +113,15 @@ class EmbeddingsCache:
 
         save_pickle(embeddings_path, EmbeddingsCache._embeddings_model)
         return EmbeddingsCache._embeddings_model
+
+    @staticmethod
+    def get_wv_embedding(word):
+        return EmbeddingsCache._embeddings_model[word]
+
+    @staticmethod
+    def get_init_embeddings(mat_dim):
+        if mat_dim in EmbeddingsCache._init_embeddings_cache:
+            return EmbeddingsCache._init_embeddings_cache[mat_dim]
+
+        EmbeddingsCache._init_embeddings_cache[mat_dim] = np.random.random(mat_dim)
+        return EmbeddingsCache._init_embeddings_cache[mat_dim]

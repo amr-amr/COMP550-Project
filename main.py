@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 from dtos import ExperimentData, ExperimentParameters
 from helpers import ensure_folder_exists
 from results_analysis import ModelResultsAnalyzer, TestResultsManager
-from data_preprocessing import preprocess_dataset
+from data_preprocessing import load_data
 
 import numpy as np
 from caching import WordIndexCache
@@ -30,7 +30,6 @@ def train_dev_split(df_train_dev, train_percent=0.9):
     nb_train = int(len(df_train_dev) * train_percent)
     return df_train_dev[:nb_train], df_train_dev[nb_train:]
 
-import time
 
 class ExperimentWrapper:
 
@@ -102,28 +101,37 @@ class ExperimentWrapper:
 
 
 if __name__ == '__main__':
-    df_train_val, df_test = preprocess_dataset('df_train.pkl', 'df_test.pkl')
 
-    if not WordIndexCache.is_initialized():
-        WordIndexCache.initialize(list(df_train_val['spacy_text']) + list(df_test['spacy_text']))
-
-    df_train, df_dev = train_dev_split(df_train_val, 0.9)
-
-    experiment_wrapper = ExperimentWrapper()
-
+    # Sample of all possible settings:
+    # ---------------------------------
+    # dropout = 0.5
+    # epochs = 20
+    # pos_dim = 10
+    # batch_size = 128
+    # sent_dim = [200, 400]
+    # nn_models = ['cnn', 'lstm', 'ff']
+    # train_wv = [False, True]
+    # use_pos = [None, 'embed', 'one_hot']
+    # use_parse = [None, 'filt', 'concat']
+    # ---------------------------------
     dropout = 0.5
     epochs = 20
     pos_dim = 10
     batch_size = 128
+    sent_dim = [300]
     nn_models = ['ff']
-    # nn_models = ['cnn', 'lstm', 'ff']
-    sent_dim = [200]
-    train_wv = [False, True]
-    use_pos = [None, 'embed']
-    # use_pos = [None, 'embed', 'one_hot']
+    train_wv = [False]
+    use_pos = [None]
     use_parse = [None]
-    # use_parse = [None, 'filt', 'concat']
 
+    df_train_val, df_test = load_data('df_train.pkl', 'df_test.pkl')
+
+    if not WordIndexCache.is_initialized():
+        WordIndexCache.initialize(list(df_train_val['spacy_text']) + list(df_test['spacy_text']))
+
+    df_train, df_dev = train_dev_split(df_train_val)
+
+    experiment_wrapper = ExperimentWrapper()
     exp_params = [ExperimentParameters(nn_model=nn, dropout=dropout, epochs=epochs, sent_dim=sd,
                                        batch_size=batch_size, train_wv=wvt, use_pos=upos, use_parse=uparse)
                   for nn in nn_models for sd in sent_dim for wvt in train_wv for upos in use_pos for uparse in use_parse]

@@ -31,12 +31,10 @@ class ExperimentData:
 
 class ExperimentParameters:
 
-    def __init__(self, batch_size=256, wv_type='gensim-glove-100',
-                 train_wv=False,
-                 use_pos=None, use_parse=None, pos_dict_len=None, sent_dim=200, wv_dim=100,
+    def __init__(self, batch_size=128, train_wv=False,
+                 use_pos=None, use_parse=None, pos_dict_len=None, sent_dim=300, wv_dim=100,
                  pos_dim=None, epochs=20, dropout=0.5, nn_model='lstm'):
         self.batch_size = batch_size
-        self.wv_type = wv_type
         self.train_wv = train_wv
         self.use_pos = use_pos
         self.use_parse = use_parse
@@ -50,9 +48,9 @@ class ExperimentParameters:
         self.timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')
 
     def __str__(self) -> str:
-        return "nn_model=%s batch_size=%s use_pos=%s use_parse=%s sent_dim=%d pos_dim=%d dropout=%.2f train_wv=%s" \
-               % (self.nn_model, self.batch_size, self.use_pos, self.use_parse, self.sent_dim,
-                  self.pos_dim, self.dropout, self.train_wv)
+        return "nn_model=%s batch_size=%s sent_dim=%d train_wv=%s dropout=%.2f use_pos=%s pos_dim=%d use_parse=%s" \
+               % (self.nn_model, self.batch_size, self.sent_dim, self.train_wv, self.dropout,
+                  self.use_pos, self.pos_dim, self.use_parse)
 
     def is_baseline(self):
         return self.use_pos is None and self.use_parse is None

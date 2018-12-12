@@ -156,10 +156,6 @@ class TestResultsManager:
 
     def __init__(self):
 
-        # self._df_lookup = {'cnn': (None, os.path.join(DATA_DIRECTORY, 'results', 'cnn_test_results.csv')),
-        #                    'lstm': (None, os.path.join(DATA_DIRECTORY, 'results', 'lstm_test_results.csv')),
-        #                    'ff': (None, os.path.join(DATA_DIRECTORY, 'results', 'ff_test_results.csv'))}
-
         self._df_lookup = {}
         models = ['cnn', 'lstm', 'ff']
 
@@ -170,16 +166,22 @@ class TestResultsManager:
                 df = pd.read_csv(file_path)
             else:
                 df = pd.DataFrame(columns=['model', 'sent_dim', 'train_wv', 'use_pos', 'use_parse',
-                                           'baseline', 'accuracy', 'acc_vs_baseline'])
+                                           'baseline', 'accuracy', 'acc_vs_baseline', 'f1-score', 'f1-score_vs_baseline',
+                                           'precision', 'precision_vs_baseline', 'recall', 'recall_vs_baseline'])
 
             self._df_lookup[nn_model] = (df, file_path)
 
-    def save_result(self, params: ExperimentParameters, accuracy):
+    def save_result(self, params: ExperimentParameters, metrics):
 
         baseline = params.get_baseline()
         model_name = baseline if params.is_baseline() else params.get_name()
         (df, results_path) = self._df_lookup[params.nn_model]
         existing_entry = df[df['model'] == model_name]
+
+        accuracy = metrics['accuracy']
+        f1score = metrics['good']['f1-score']
+        precision = metrics['good']['precision']
+        recall = metrics['good']['recall']
 
         if existing_entry.empty:
             # Add new entry
@@ -191,18 +193,30 @@ class TestResultsManager:
                  'use_parse': str(params.use_parse),
                  'baseline': baseline,
                  'accuracy': accuracy,
+                 'f1-score': f1score,
+                 'precision': precision,
+                 'recall': recall,
                  'acc_vs_baseline': 0}, ignore_index=True)
         else:
             # Update accuracy of existing entry
             df.loc[df['model'] == model_name, 'accuracy'] = accuracy
+            df.loc[df['model'] == model_name, 'f1-score'] = f1score
+            df.loc[df['model'] == model_name, 'precision'] = precision
+            df.loc[df['model'] == model_name, 'recall'] = recall
 
         # Update accuracies versus baseline
-        baseline_accuracy_set = df[df['model'] == baseline]['accuracy']
+        baseline_model = df.loc[df['model'] == baseline]
 
-        if not baseline_accuracy_set.empty:
-            baseline_accuracy = baseline_accuracy_set.values[0]
+        if not baseline_model.empty:
+            baseline_metrics = baseline_model.iloc[0]
             df['acc_vs_baseline'] = df.loc[df['baseline'] == baseline] \
-                .apply(lambda x: x['accuracy'] - baseline_accuracy, axis=1)
+                .apply(lambda x: x['accuracy'] - baseline_metrics['accuracy'], axis=1)
+            df['f1-score_vs_baseline'] = df.loc[df['baseline'] == baseline] \
+                .apply(lambda x: x['f1-score'] - baseline_metrics['f1-score'], axis=1)
+            df['precision_vs_baseline'] = df.loc[df['baseline'] == baseline] \
+                .apply(lambda x: x['precision'] - baseline_metrics['precision'], axis=1)
+            df['recall_vs_baseline'] = df.loc[df['baseline'] == baseline] \
+                .apply(lambda x: x['recall'] - baseline_metrics['recall'], axis=1)
 
         self._df_lookup[params.nn_model] = (df, results_path)
         df.to_csv(results_path, index=False)
@@ -210,8 +224,8 @@ class TestResultsManager:
 
 if __name__ == '__main__':
     trm = TestResultsManager()
-    trm.save_result(ExperimentParameters(), 0.8)
-    trm.save_result(ExperimentParameters(use_pos='embed'), 0.8)
-    trm.save_result(ExperimentParameters(use_pos='one_hot'), 0.9)
-    trm.save_result(ExperimentParameters(nn_model='cnn'), 0.8)
-    trm.save_result(ExperimentParameters(nn_model='cnn', use_pos='one_hot'), 0.9)
+    trm.save_result(ExperimentParameters(), {'accuracy': 0.9, 'good': {'f1-score': 0.9, 'precision': 0.9, 'recall': 0.9}})
+    trm.save_result(ExperimentParameters(use_pos='embed'), {'accuracy': 0.8, 'good': {'f1-score': 0.7, 'precision': 0.7, 'recall': 0.7}})
+    trm.save_result(ExperimentParameters(use_pos='one_hot'), {'accuracy': 0.7, 'good': {'f1-score': 0.2, 'precision': 0.1, 'recall': 0.4}})
+    trm.save_result(ExperimentParameters(nn_model='cnn'), {'accuracy': 0.4, 'good': {'f1-score': 0.5, 'precision': 0.2, 'recall': 0.4}})
+    trm.save_result(ExperimentParameters(nn_model='cnn', use_pos='one_hot'), {'accuracy': 0.3, 'good': {'f1-score': 0.4, 'precision': 0.2, 'recall': 0.5}})
