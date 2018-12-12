@@ -11,6 +11,9 @@ Script containing classes related to the analysis of prediction results reported
 """
 import pandas as pd
 import numpy as np
+import os
+from constants import DATA_DIRECTORY
+from dtos import ExperimentParameters
 
 
 class ModelResultsAnalyzer:
@@ -147,3 +150,37 @@ class ModelResultsAnalyzer:
                 cm.loc[row, "total"] += count
 
         return cm
+
+
+class TestResultsManager:
+    _results_path = os.path.join(DATA_DIRECTORY, 'test_results_summary.csv')
+
+    def __init__(self):
+        self._df_results = pd.DataFrame(columns=['model', 'baseline', 'accuracy', 'acc_vs_baseline'])
+        if os.path.exists(TestResultsManager._results_path):
+            self._df_results = pd.read_csv(self._results_path)
+
+    def save_result(self, params: ExperimentParameters, accuracy):
+
+        baseline = params.get_baseline()
+        existing_entry = self._df_results[self._df_results['model'] == params.get_name()]
+
+        if existing_entry.empty:
+            self._df_results = self._df_results.append({'model': params.get_name(), 'baseline': baseline.get_name(),
+                                                        'accuracy': accuracy, 'acc_vs_baseline': 0}, ignore_index=True)
+        else:
+            self._df_results.loc[self._df_results['model'] == params.get_name(), 'accuracy'] = accuracy
+
+        baseline_accuracy_set = self._df_results[self._df_results['model'] == baseline.get_name()]['accuracy']
+        baseline_accuracy = None if baseline_accuracy_set.empty else baseline_accuracy_set.values[0]
+
+        # Update accuracies versus baseline
+        if baseline_accuracy is not None:
+            print('%s: %.3f versus baseline %s %.3f (%.3f)' % (params.get_name(), accuracy, baseline.get_name(),
+                                                               baseline_accuracy, accuracy - baseline_accuracy))
+
+            self._df_results['acc_vs_baseline'] = self._df_results \
+                .apply(lambda x: x['accuracy'] - baseline_accuracy if x['baseline'] == baseline.get_name() else x[
+                'acc_vs_baseline'], axis=1)
+
+        self._df_results.to_csv(TestResultsManager._results_path)

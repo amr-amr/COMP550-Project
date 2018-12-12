@@ -19,7 +19,7 @@ from model import ModelFactory, TextSequence
 from matplotlib import pyplot as plt
 from dtos import ExperimentData, ExperimentParameters
 from helpers import ensure_folder_exists
-from results_analysis import ModelResultsAnalyzer
+from results_analysis import ModelResultsAnalyzer, TestResultsManager
 from data_preprocessing import preprocess_dataset
 
 import numpy as np
@@ -30,11 +30,13 @@ def train_dev_split(df_train_dev, train_percent=0.9):
     nb_train = int(len(df_train_dev) * train_percent)
     return df_train_dev[:nb_train], df_train_dev[nb_train:]
 
+import time
 
 class ExperimentWrapper:
 
     def __init__(self):
         self.model_factory = ModelFactory()
+        self.test_results_manager = TestResultsManager()
 
     def run(self, train_data: ExperimentData, dev_data: ExperimentData,
             test_data: ExperimentData, params: ExperimentParameters):
@@ -69,7 +71,7 @@ class ExperimentWrapper:
         fig = plt.figure(figsize=(12, 12))
         plt.plot(history["acc"])
         plt.plot(history["val_acc"])
-        plt.title('%s\nTraining and Validation Accuracy)' % params.__str__())
+        plt.title('%s\nTraining and Validation Accuracy' % params.__str__())
         plt.legend(['Training Accuracy', 'Validation Accuracy'])
         plt.show()
         fig.savefig(os.path.join(results_folder, 'accuracy_plot'))
@@ -82,20 +84,17 @@ class ExperimentWrapper:
         test_generator = TextSequence(test_data, params)
         test_df = test_data.df
 
-        _, acc = model.evaluate_generator(test_generator)
-        print('Test accuracy = %f' % acc)
-
         y_pred = np.round(model.predict_generator(test_generator))
-
         labels = ['good', 'bad']
         test_df['y_pred_label'] = ['good' if i == 1 else 'bad' for i in y_pred]
         test_df['true_label'] = ['good' if i == 1 else 'bad' for i in test_df['label']]
-        mra = ModelResultsAnalyzer(test_df, labels, "true_label", ["y_pred_label"])
 
+        mra = ModelResultsAnalyzer(test_df, labels, "true_label", ["y_pred_label"])
         metrics = mra.get_metrics("y_pred_label")
         confusion_matrix = mra.get_cm("y_pred_label")
         print(metrics)
         print(confusion_matrix)
+        self.test_results_manager.save_result(params, metrics['accuracy'])
 
         with open(os.path.join(results_folder, 'metrics.txt'), 'w') as f:
             print(metrics, file=f)
@@ -116,11 +115,14 @@ if __name__ == '__main__':
     epochs = 20
     pos_dim = 10
     batch_size = 128
-    sent_dim = [200, 400]
-    nn_models = ['cnn', 'lstm', 'ff']
+    nn_models = ['ff']
+    # nn_models = ['cnn', 'lstm', 'ff']
+    sent_dim = [200]
     train_wv = [False, True]
-    use_pos = [None, 'embed', 'one_hot']
-    use_parse = [None, 'filt', 'concat']
+    use_pos = [None, 'embed']
+    # use_pos = [None, 'embed', 'one_hot']
+    use_parse = [None]
+    # use_parse = [None, 'filt', 'concat']
 
     exp_params = [ExperimentParameters(nn_model=nn, dropout=dropout, epochs=epochs, sent_dim=sd,
                                        batch_size=batch_size, train_wv=wvt, use_pos=upos, use_parse=uparse)

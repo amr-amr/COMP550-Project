@@ -12,6 +12,7 @@ Script Description:
 from caching import PosDictionary
 import datetime
 import time
+import copy
 
 
 class ExperimentData:
@@ -53,7 +54,19 @@ class ExperimentParameters:
                % (self.nn_model, self.batch_size, self.use_pos, self.use_parse, self.sent_dim,
                   self.pos_dim, self.dropout, self.train_wv)
 
+    def is_baseline(self):
+        return self.get_baseline().file_name == self.file_name()
+
+    def get_baseline(self):
+        baseline = copy.copy(self)
+        baseline.use_parse = None
+        baseline.use_pos = None
+        return baseline
+
+    def get_name(self) -> str:
+        return "%s_%d-sentdim_%s-trainwv_%.2f-dropout_%s-%d-pos_%s-parse" \
+               % (self.nn_model, self.sent_dim, self.train_wv, self.dropout,
+                  self.use_pos, self.pos_dim, self.use_parse)
+
     def file_name(self) -> str:
-        return "%s_%d-sentdim_%s_%d-pos_%s-parse_%s-trainwv_%.2f-dropout" \
-               % (self.nn_model, self.sent_dim, self.use_pos, self.pos_dim,
-                  self.use_parse, self.train_wv, self.dropout)
+        return self.get_name()
