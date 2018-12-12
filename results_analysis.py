@@ -153,7 +153,7 @@ class ModelResultsAnalyzer:
 
 
 class TestResultsManager:
-    _results_path = os.path.join(DATA_DIRECTORY, 'test_results_summary.csv')
+    _results_path = os.path.join(DATA_DIRECTORY, 'results', 'test_results_summary.csv')
 
     def __init__(self):
         self._df_results = pd.DataFrame(columns=['model', 'baseline', 'accuracy', 'acc_vs_baseline'])
