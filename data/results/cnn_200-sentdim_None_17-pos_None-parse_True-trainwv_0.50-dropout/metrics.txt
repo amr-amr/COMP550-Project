@@ -1,0 +1,5 @@
+{'accuracy': 0.85676, 'good': {'precision': 0.8822974710672953, 'recall': 0.82336, 'f1-score': 0.8518104696875647}, 'bad': {'precision': 0.8344206974128234, 'recall': 0.89016, 'f1-score': 0.8613895877685311}}
+           pred_good  pred_bad    total
+true_good    10292.0    2208.0  12500.0
+true_bad      1373.0   11127.0  12500.0
+total        11665.0   13335.0      0.0

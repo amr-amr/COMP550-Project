@@ -1,16 +1,76 @@
+"""
+Comp 550 - Final Project - Fall 2018
+Augmenting Word Embeddings using Additional Linguistic Information
+Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+
+Github:                 https://github.com/amr-amr/COMP550-Project
+Public Data folder:     https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
+
+Script Description:
+
+"""
 from keras.layers import Dense, Input, CuDNNLSTM, Dropout, SpatialDropout1D, Bidirectional, Embedding, \
-    Concatenate, Lambda, Convolution1D, MaxPooling1D, Flatten
+    Concatenate, Lambda, Convolution1D, MaxPooling1D, Flatten, GlobalAveragePooling1D
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.layers.normalization import BatchNormalization
-
 from caching import WordIndexCache
-from keras_extensions import ExperimentParameters
 from keras import backend as K
-from keras.datasets import imdb
 import numpy as np
-from keras_extensions import EmbeddingsCache
-from keras.engine.topology import Layer
+from keras.utils import Sequence
+from keras.preprocessing import sequence
+import math
+from caching import EmbeddingsCache
+from dtos import ExperimentParameters, ExperimentData
+
+
+class TextSequence(Sequence):
+
+    def __init__(self, data: ExperimentData, params: ExperimentParameters):
+        self.data = data
+        self.params = params
+        self.wv_model = EmbeddingsCache.get_wv_embeddings()
+        self.word_index = WordIndexCache.get_word_index()
+
+    def __len__(self):
+        return math.ceil(len(self.data.x) / self.params.batch_size)
+
+    def __getitem__(self, idx):
+        # build batches
+        batch_start = idx * self.params.batch_size
+        batch_end = batch_start + self.params.batch_size
+        batch_x = self.data.x[batch_start:batch_end]
+        batch_y = self.data.y[batch_start:batch_end]
+
+        # process batches
+        processed_batch_x = np.array([self.text_process(x) for x in batch_x])
+        processed_batch_inputs = [processed_batch_x]
+
+        if self.params.use_pos:
+            batch_pos = self.data.x_pos[batch_start:batch_end]
+            processed_batch_pos = sequence.pad_sequences(batch_pos, self.params.sent_dim, padding='post',
+                                                         truncating='post', value=(self.params.pos_dict_len - 1))
+            processed_batch_inputs.append(processed_batch_pos)
+        if self.params.use_parse:
+            batch_parse = self.data.x_parse[batch_start:batch_end]
+            processed_batch_parse = np.array([self.parse_process(parse) for parse in batch_parse])
+            processed_batch_inputs.append(processed_batch_parse)
+
+        return processed_batch_inputs, batch_y
+
+    def text_process(self, text):
+        wi_tensor = self.word_index["<PAD>"] * np.ones(self.params.sent_dim)
+        for i, w in zip(range(self.params.sent_dim), text):
+            wi_tensor[i] = (self.word_index[w])
+        return wi_tensor
+
+    def parse_process(self, parse):
+        parse_tensor = np.eye(self.params.sent_dim)
+        for i, dep in zip(range(self.params.sent_dim), parse):
+            j = dep[1]  # head of word at index i
+            if j < self.params.sent_dim and i < self.params.sent_dim and j != i:
+                parse_tensor[i][j] = -1
+        return parse_tensor
 
 
 class ModelFactory:
@@ -48,13 +108,13 @@ class ModelFactory:
     def word_index_input_tensor(params: ExperimentParameters):
         wi_input = Input(shape=(params.sent_dim,), name='word_index_input')
         word_index = WordIndexCache.get_word_index()
-        wv_cache = EmbeddingsCache.get_glove_100_model()
+        wv_cache = EmbeddingsCache.get_wv_embeddings()
         pretrained_wv = 0.1 * np.ones((len(word_index), params.wv_dim))
         for word, index in word_index.items():
             try:
                 pretrained_wv[index] = wv_cache[word]
             except:
-                pretrained_wv[index] = np.random.random(params.wv_dim)
+                pretrained_wv[index] = 0.2*(np.random.random(params.wv_dim) - 0.5)
 
         embedding_layer = Embedding(len(word_index), params.wv_dim, input_length=params.sent_dim,
                                     embeddings_initializer='glorot_normal', weights=[pretrained_wv],
@@ -83,7 +143,7 @@ class ModelFactory:
         model = Model(inputs=inputs, outputs=preds)
 
         model.compile(loss='binary_crossentropy',
-                      optimizer=Adam(lr=0.001, clipnorm=.25, beta_1=0.7, beta_2=0.99),
+                      optimizer='adam',
                       metrics=['accuracy'])
 
         return model
@@ -140,6 +200,25 @@ class ModelFactory:
         model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
         return model
 
+    @staticmethod
+    def create_ff_model(params: ExperimentParameters, wv_input_func, pos_input_func):
+
+        input_layer, inputs = pos_input_func(params, wv_input_func) if pos_input_func else wv_input_func(params)
+
+        if params.use_parse:
+            input_layer, inputs = ModelFactory.create_parse_filter_layer(params, input_layer, inputs)
+
+        x = GlobalAveragePooling1D()(input_layer)
+        x = Dense(128, activation='relu')(x)
+        x = Dense(64, activation='relu')(x)
+
+        x = Dropout(params.dropout, name='dropout_pred_%.2f' % params.dropout)(x)
+        model_output = Dense(1, activation='sigmoid')(x)
+
+        model = Model(inputs=inputs, outputs=model_output)
+        model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+        return model
+
     def create(self, params: ExperimentParameters):
 
         pos_input_func = None
@@ -148,12 +227,16 @@ class ModelFactory:
         elif params.use_pos == 'one_hot':
             pos_input_func = self.pos_one_hot_input_tensor
 
-        wv_input_func = self.word_index_input_tensor # if params.train_wv else self.input_tensor
+        wv_input_func = self.word_index_input_tensor
 
         if params.nn_model == 'cnn':
             return self.create_cnn_model(params, wv_input_func, pos_input_func)
-        else:
+        elif params.nn_model == 'ff':
+            return self.create_ff_model(params, wv_input_func, pos_input_func)
+        elif params.nn_model == 'lstm':
             return self.create_lstm_model(params, wv_input_func, pos_input_func)
+        else:
+            raise Exception('Unknown neural network model %s. Expected: cnn, ff, lstm' % params.nn_model)
 
 
 if __name__ == '__main__':
