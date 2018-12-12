@@ -55,13 +55,11 @@ class ExperimentParameters:
                   self.pos_dim, self.dropout, self.train_wv)
 
     def is_baseline(self):
-        return self.get_baseline().file_name == self.file_name()
+        return self.use_pos is None and self.use_parse is None
 
     def get_baseline(self):
-        baseline = copy.copy(self)
-        baseline.use_parse = None
-        baseline.use_pos = None
-        return baseline
+        return "%s_%d-sentdim_%s-trainwv" \
+               % (self.nn_model, self.sent_dim, self.train_wv)
 
     def get_name(self) -> str:
         return "%s_%d-sentdim_%s-trainwv_%.2f-dropout_%s-%d-pos_%s-parse" \

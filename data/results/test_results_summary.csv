@@ -1,5 +1,0 @@
-,Unnamed: 0,Unnamed: 0.1,model,baseline,accuracy,acc_vs_baseline
-0,0.0,0.0,ff_200-sentdim_False-trainwv_0.50-dropout_None-17-pos_None-parse,ff_200-sentdim_False-trainwv_0.50-dropout_None-17-pos_None-parse,0.779,0.0
-1,1.0,1.0,ff_200-sentdim_False-trainwv_0.50-dropout_embed-17-pos_None-parse,ff_200-sentdim_False-trainwv_0.50-dropout_None-17-pos_None-parse,0.77972,0.0007199999999999429
-2,2.0,2.0,ff_200-sentdim_True-trainwv_0.50-dropout_None-17-pos_None-parse,ff_200-sentdim_True-trainwv_0.50-dropout_None-17-pos_None-parse,0.85308,0.0
-3,,,ff_200-sentdim_True-trainwv_0.50-dropout_embed-17-pos_None-parse,ff_200-sentdim_True-trainwv_0.50-dropout_None-17-pos_None-parse,0.84692,-0.006159999999999943

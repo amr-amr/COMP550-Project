@@ -153,34 +153,65 @@ class ModelResultsAnalyzer:
 
 
 class TestResultsManager:
-    _results_path = os.path.join(DATA_DIRECTORY, 'results', 'test_results_summary.csv')
 
     def __init__(self):
-        self._df_results = pd.DataFrame(columns=['model', 'baseline', 'accuracy', 'acc_vs_baseline'])
-        if os.path.exists(TestResultsManager._results_path):
-            self._df_results = pd.read_csv(self._results_path)
+
+        # self._df_lookup = {'cnn': (None, os.path.join(DATA_DIRECTORY, 'results', 'cnn_test_results.csv')),
+        #                    'lstm': (None, os.path.join(DATA_DIRECTORY, 'results', 'lstm_test_results.csv')),
+        #                    'ff': (None, os.path.join(DATA_DIRECTORY, 'results', 'ff_test_results.csv'))}
+
+        self._df_lookup = {}
+        models = ['cnn', 'lstm', 'ff']
+
+        for nn_model in models:
+            file_path = os.path.join(DATA_DIRECTORY, 'results', '%s_test_results.csv' % nn_model)
+            if os.path.exists(file_path):
+                print('Loading existing results summary %s' % file_path)
+                df = pd.read_csv(file_path)
+            else:
+                df = pd.DataFrame(columns=['model', 'sent_dim', 'train_wv', 'use_pos', 'use_parse',
+                                           'baseline', 'accuracy', 'acc_vs_baseline'])
+
+            self._df_lookup[nn_model] = (df, file_path)
 
     def save_result(self, params: ExperimentParameters, accuracy):
 
         baseline = params.get_baseline()
-        existing_entry = self._df_results[self._df_results['model'] == params.get_name()]
+        model_name = baseline if params.is_baseline() else params.get_name()
+        (df, results_path) = self._df_lookup[params.nn_model]
+        existing_entry = df[df['model'] == model_name]
 
         if existing_entry.empty:
-            self._df_results = self._df_results.append({'model': params.get_name(), 'baseline': baseline.get_name(),
-                                                        'accuracy': accuracy, 'acc_vs_baseline': 0}, ignore_index=True)
+            # Add new entry
+            df = df.append(
+                {'model': model_name,
+                 'sent_dim': params.sent_dim,
+                 'train_wv': params.train_wv,
+                 'use_pos': str(params.use_pos),
+                 'use_parse': str(params.use_parse),
+                 'baseline': baseline,
+                 'accuracy': accuracy,
+                 'acc_vs_baseline': 0}, ignore_index=True)
         else:
-            self._df_results.loc[self._df_results['model'] == params.get_name(), 'accuracy'] = accuracy
-
-        baseline_accuracy_set = self._df_results[self._df_results['model'] == baseline.get_name()]['accuracy']
-        baseline_accuracy = None if baseline_accuracy_set.empty else baseline_accuracy_set.values[0]
+            # Update accuracy of existing entry
+            df.loc[df['model'] == model_name, 'accuracy'] = accuracy
 
         # Update accuracies versus baseline
-        if baseline_accuracy is not None:
-            print('%s: %.3f versus baseline %s %.3f (%.3f)' % (params.get_name(), accuracy, baseline.get_name(),
-                                                               baseline_accuracy, accuracy - baseline_accuracy))
+        baseline_accuracy_set = df[df['model'] == baseline]['accuracy']
 
-            self._df_results['acc_vs_baseline'] = self._df_results \
-                .apply(lambda x: x['accuracy'] - baseline_accuracy if x['baseline'] == baseline.get_name() else x[
-                'acc_vs_baseline'], axis=1)
+        if not baseline_accuracy_set.empty:
+            baseline_accuracy = baseline_accuracy_set.values[0]
+            df['acc_vs_baseline'] = df.loc[df['baseline'] == baseline] \
+                .apply(lambda x: x['accuracy'] - baseline_accuracy, axis=1)
 
-        self._df_results.to_csv(TestResultsManager._results_path)
+        self._df_lookup[params.nn_model] = (df, results_path)
+        df.to_csv(results_path, index=False)
+
+
+if __name__ == '__main__':
+    trm = TestResultsManager()
+    trm.save_result(ExperimentParameters(), 0.8)
+    trm.save_result(ExperimentParameters(use_pos='embed'), 0.8)
+    trm.save_result(ExperimentParameters(use_pos='one_hot'), 0.9)
+    trm.save_result(ExperimentParameters(nn_model='cnn'), 0.8)
+    trm.save_result(ExperimentParameters(nn_model='cnn', use_pos='one_hot'), 0.9)
