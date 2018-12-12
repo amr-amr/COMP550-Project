@@ -1,3 +1,10 @@
+"""
+Comp 550 - Final Project - Augmenting Word Embeddings using Additional Linguistic Information
+Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+
+Script Description:
+
+"""
 from keras.layers import Dense, Input, CuDNNLSTM, Dropout, SpatialDropout1D, Bidirectional, Embedding, \
     Concatenate, Lambda, Convolution1D, MaxPooling1D, Flatten
 from keras.models import Model
@@ -9,6 +16,7 @@ import numpy as np
 from keras.utils import Sequence
 from keras.preprocessing import sequence
 import math
+from caching import EmbeddingsCache
 from dtos import ExperimentParameters, ExperimentData
 
 
@@ -57,7 +65,7 @@ class TextSequence(Sequence):
         parse_tensor = np.eye(self.params.sent_dim)
         for i, dep in zip(range(self.params.sent_dim), parse):
             j = dep[1]  # head of word at index i
-            if j < 200 and i < 200 and j != i:
+            if j < self.params.sent_dim and i < self.params.sent_dim and j != i:
                 parse_tensor[i][j] = -1
         return parse_tensor
 

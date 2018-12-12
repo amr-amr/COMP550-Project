@@ -1,3 +1,10 @@
+"""
+Comp 550 - Final Project - Augmenting Word Embeddings using Additional Linguistic Information
+Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+
+Script Description:
+
+"""
 import os
 from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 import copy
@@ -34,7 +41,7 @@ class ExperimentWrapper:
 
         # Run training and validation
         training_generator = TextSequence(train_data, params)
-        validation_generator = TextSequence(dev_data, params, validation=True)
+        validation_generator = TextSequence(dev_data, params, validation = True)
 
         print("Running experiment:")
         print(params)
