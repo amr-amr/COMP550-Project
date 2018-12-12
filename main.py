@@ -116,14 +116,15 @@ if __name__ == '__main__':
     epochs = 20
     pos_dim = 10
     batch_size = 128
+    sent_dim = [200, 400]
     nn_models = ['cnn', 'lstm', 'ff']
     train_wv = [False, True]
     use_pos = [None, 'embed', 'one_hot']
     use_parse = [None, 'filt', 'concat']
 
-    exp_params = [ExperimentParameters(nn_model=nn, dropout=dropout, epochs=epochs,
+    exp_params = [ExperimentParameters(nn_model=nn, dropout=dropout, epochs=epochs, sent_dim=sd,
                                        batch_size=batch_size, train_wv=wvt, use_pos=upos, use_parse=uparse)
-                  for nn in nn_models for wvt in train_wv for upos in use_pos for uparse in use_parse]
+                  for nn in nn_models for sd in sent_dim for wvt in train_wv for upos in use_pos for uparse in use_parse]
 
     for ep in exp_params:
         experiment_wrapper.run(ExperimentData.from_df(df_train),
