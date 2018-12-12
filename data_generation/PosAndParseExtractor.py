@@ -1,43 +1,4 @@
-import spacy
-import pandas as pd
-import tqdm
-from data_generation.pos_dicts import PosDictionary
-from nltk import pos_tag as pos_tagger
 
-
-class PosAndParseExtractor:
-    def __init__(self, spacy_model="en_core_web_lg"):
-        self.spacy_pos_dict = PosDictionary.spacy
-        self.nltk_pos_dict = PosDictionary.nltk
-        self.nlp = spacy.load(spacy_model)
-        self.counter = 0
-
-    def parse_text(self, text):
-        spacy_pos_tags = []
-        parse_tree = []
-        spacy_text = []
-
-        if self.counter % 100 == 0:
-            print(self.counter)
-
-        doc = self.nlp(text)
-        for token in doc:
-            spacy_text.append(token.lemma_)
-            # parse pos tags
-            pos_tag = token.pos_
-            try:
-                i = self.spacy_pos_dict[pos_tag]
-            except:
-                i = 16
-            spacy_pos_tags.append(i)
-
-            # dependency parse
-            dep_and_head = (token.dep_, token.head.i)
-            parse_tree.append(dep_and_head)
-
-        nltk_pos_tags = [self.nltk_pos_dict[pos] for (word, pos) in pos_tagger(spacy_text)]
-        self.counter = self.counter + 1
-        return spacy_text, spacy_pos_tags, nltk_pos_tags, parse_tree
 
 
 if __name__ == '__main__':

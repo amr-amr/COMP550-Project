@@ -1,7 +1,36 @@
 import os
 import pickle
-import gensim.downloader as gensim_api
 from keras.datasets import imdb
+from keras.preprocessing.text import Tokenizer
+from nltk import load
+from constants import DATA_DIRECTORY
+
+
+class PosDictionary:
+    spacy = {'ADJ': 0,
+             'ADP': 1,
+             'ADV': 2,
+             'AUX': 3,
+             'CONJ': 4,
+             'CCONJ': 4,
+             'DET': 5,
+             'INTJ': 6,
+             'NOUN': 7,
+             'NUM': 8,
+             'PART': 9,
+             'PRON': 10,
+             'PROPN': 11,
+             'PUNCT': 12,
+             'SCONJ': 13,
+             'SYM': 14,
+             'VERB': 15,
+             'X': 16}
+
+    # -1 since 4 encoded twice
+    spacy_len = len(spacy) - 1
+
+    nltk = {key: i for (i, key) in enumerate(load('help/tagsets/upenn_tagset.pickle').keys())}
+    nltk_len = len(nltk)
 
 
 class WordIndexCache:
@@ -23,15 +52,28 @@ class WordIndexCache:
 
 
 class EmbeddingsCache:
-    glove_100_model = None
+    embedding_model = None
+    embedding_path = 'embeddings.plk'
 
     @staticmethod
-    def get_glove_100_model():
-        if os.path.isfile('glove-100.plk'):
-            return pickle.load(open('glove-100.plk', 'rb'))
+    def get_embedding():
+        if EmbeddingsCache.embedding_model is not None:
+            return EmbeddingsCache.embedding_model
 
-        embeddings_model = gensim_api.load('glove-wiki-gigaword-100')
-        with open('glove-100.plk', 'wb') as f:
-            pickle.dump(embeddings_model, f)
+        embedding_path = os.path.join(DATA_DIRECTORY, EmbeddingsCache.embedding_path)
+        if os.path.isfile(embedding_path):
+            return pickle.load(open(embedding_path, 'rb'))
 
-        return embeddings_model
+        raise Exception('Missing word vector embeddings file %s' % embedding_path)
+
+    @staticmethod
+    def initialize(train_text, test_text):
+        all_text = train_text + test_text
+        tokenizer = Tokenizer(lower=False, oov_token='<OOV>')
+        tokenizer.fit_on_texts(all_text)
+        EmbeddingsCache.embedding_model = tokenizer
+
+        with open(os.path.join(DATA_DIRECTORY, EmbeddingsCache.embedding_path), 'wb') as f:
+            pickle.dump(EmbeddingsCache.embedding_model, f)
+
+        return EmbeddingsCache.embedding_model

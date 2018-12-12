@@ -3,14 +3,63 @@ from keras.layers import Dense, Input, CuDNNLSTM, Dropout, SpatialDropout1D, Bid
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.layers.normalization import BatchNormalization
-
 from caching import WordIndexCache
-from keras_extensions import ExperimentParameters
 from keras import backend as K
-from keras.datasets import imdb
 import numpy as np
-from keras_extensions import EmbeddingsCache
-from keras.engine.topology import Layer
+from keras.utils import Sequence
+from keras.preprocessing import sequence
+import math
+from dtos import ExperimentParameters, ExperimentData
+
+
+class TextSequence(Sequence):
+
+    def __init__(self, data: ExperimentData, params: ExperimentParameters):
+        self.data = data
+        self.params = params
+        self.wv_model = EmbeddingsCache.get_embedding()
+        self.ovv_count = 0
+        self.word_index = WordIndexCache.get_word_index()
+
+    def __len__(self):
+        return math.ceil(len(self.data.x) / self.params.batch_size)
+
+    def __getitem__(self, idx):
+        # build batches
+        batch_start = idx * self.params.batch_size
+        batch_end = batch_start + self.params.batch_size
+        batch_x = self.data.x[batch_start:batch_end]
+        batch_y = self.data.y[batch_start:batch_end]
+
+        # process batches
+        processed_batch_x = np.array([self.text_process(x) for x in batch_x])
+        processed_batch_inputs = [processed_batch_x]
+
+        if self.params.use_pos:
+            batch_pos = self.data.x_pos[batch_start:batch_end]
+            processed_batch_pos = sequence.pad_sequences(batch_pos, self.params.sent_dim, padding='post',
+                                                         truncating='post', value=(self.params.pos_dict_len - 1))
+            processed_batch_inputs.append(processed_batch_pos)
+        if self.params.use_parse:
+            batch_parse = self.data.x_parse[batch_start:batch_end]
+            processed_batch_parse = np.array([self.parse_process(parse) for parse in batch_parse])
+            processed_batch_inputs.append(processed_batch_parse)
+
+        return processed_batch_inputs, batch_y
+
+    def text_process(self, text):
+        wi_tensor = self.word_index["<PAD>"] * np.ones(self.params.sent_dim)
+        for i, w in zip(range(self.params.sent_dim), text):
+            wi_tensor[i] = (self.word_index[w])
+        return wi_tensor
+
+    def parse_process(self, parse):
+        parse_tensor = np.eye(self.params.sent_dim)
+        for i, dep in zip(range(self.params.sent_dim), parse):
+            j = dep[1]  # head of word at index i
+            if j < 200 and i < 200 and j != i:
+                parse_tensor[i][j] = -1
+        return parse_tensor
 
 
 class ModelFactory:
@@ -148,7 +197,7 @@ class ModelFactory:
         elif params.use_pos == 'one_hot':
             pos_input_func = self.pos_one_hot_input_tensor
 
-        wv_input_func = self.word_index_input_tensor # if params.train_wv else self.input_tensor
+        wv_input_func = self.word_index_input_tensor  # if params.train_wv else self.input_tensor
 
         if params.nn_model == 'cnn':
             return self.create_cnn_model(params, wv_input_func, pos_input_func)

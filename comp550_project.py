@@ -2,14 +2,12 @@ import os
 from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 import copy
 import pandas as pd
-
-from data_generation.pos_dicts import PosDictionary
-from keras_extensions import TextSequence, ExperimentParameters, ExperimentData
-from model import ModelFactory
+from constants import DATA_DIRECTORY
+from model import ModelFactory, TextSequence
 from matplotlib import pyplot as plt
+from dtos import ExperimentData, ExperimentParameters
 from helpers import ensure_folder_exists
-
-DATA_DIRECTORY = os.path.join('drive', 'My Drive', 'Comp550data')
+import numpy as np
 
 
 def train_dev_split(df_train_dev, train_percent=0.9):
@@ -24,39 +22,62 @@ class ExperimentWrapper:
 
     def run(self, train_data: ExperimentData, dev_data: ExperimentData,
             test_data: ExperimentData, params: ExperimentParameters):
+
+        results_folder = os.path.join(DATA_DIRECTORY, 'results', params.file_name())
+        ensure_folder_exists(results_folder)
+
+        # Build model
         model = self.model_factory.create(params)
         model.summary()
+        with open(os.path.join(results_folder, 'architecture.txt'), 'w') as fh:
+            model.summary(print_fn=lambda x: fh.write(x + '\n'))
+
+        # Run training and validation
         training_generator = TextSequence(train_data, params)
-        validation_params = copy.deepcopy(params)
-        validation_params.batch_size = len(dev_data.x)
-        validation_generator = TextSequence(dev_data, validation_params)
-        test_generator = TextSequence(test_data, params)
+        validation_generator = TextSequence(dev_data, params, validation=True)
 
         print("Running experiment:")
         print(params)
 
-        tensor_board = TensorBoard(os.path.join(DATA_DIRECTORY, 'logs', params.file_name()))
-        model_folder = os.path.join(DATA_DIRECTORY, 'models', params.file_name())
-        ensure_folder_exists(model_folder)
-
-        # early_stopper = EarlyStopping(monitor='val_acc', patience=7, mode='max')
-        check_pointer = ModelCheckpoint(filepath=os.path.join(model_folder, params.timestamp), save_best_only=True)
-
+        check_pointer = ModelCheckpoint(filepath=resultsFiles.model_path(), save_best_only=True, verbose=1)
         hist = model.fit_generator(training_generator, epochs=params.epochs, validation_data=validation_generator,
-                                   verbose=2, callbacks=[check_pointer, tensor_board])
+                                   verbose=2, callbacks=[check_pointer])
 
         history = pd.DataFrame(hist.history)
-        plt.figure(figsize=(12, 12))
+        history.to_csv(resultsFiles.history_path(), encoding='utf-8', index=False)
+
+        fig = plt.figure(figsize=(12, 12))
         plt.plot(history["acc"])
         plt.plot(history["val_acc"])
-        plt.title(params.__str__())
+        plt.title('%s\nTraining and Validation Accuracy)' % params.__str__())
+        plt.legend(['Training Accuracy', 'Validation Accuracy'])
         plt.show()
+        fig.savefig(resultsFiles.plot_path())
 
-        #         model.save(best_model_path)
+        # Evaluate test set
+        test_generator = TextSequence(test_data, params)
         model.load_weights(check_pointer.filepath)
+        test_df = test_data.df
+        y_pred_score = model.predict_generator(test_generator)
+        y_pred = np.round(y_pred_score)
 
-        loss, acc = model.evaluate_generator(test_generator)
-        print('Test accuracy = %f' % acc)
+        # convert labels
+        labels = ['good', 'bad']
+        test_df['y_pred_label'] = ['good' if i == 1 else 'bad' for i in y_pred]
+        test_df['true_label'] = ['good' if i == 1 else 'bad' for i in test_df['label']]
+
+        mra = ModelResultsAnalyzer(test_df, labels, "true_label", ["y_pred_label"])
+
+        metrics = mra.get_metrics("y_pred_label")
+        cm = mra.get_cm("y_pred_label")
+        print(metrics)
+        print(cm)
+
+        with open(os.path.join(resultsFiles.results_folder, 'metrics.txt'), 'w') as fh:
+            with contextlib.redirect_stdout(fh):
+                print(metrics)
+                print("\n")
+                print(cm)
 
 
 if __name__ == '__main__':

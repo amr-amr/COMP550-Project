@@ -5,15 +5,16 @@ import time
 
 class ExperimentData:
 
-    def __init__(self, x, x_pos, x_parse, y):
+    def __init__(self, x, x_pos, x_parse, y, df):
         self.y = y
         self.x = x
         self.x_pos = x_pos
         self.x_parse = x_parse
+        self.df = df
 
     @staticmethod
-    def from_df(df, text_col='text', pos_col='spacy_pos', label_col='label'):
-        return ExperimentData(df[text_col], df[pos_col], df['parse'], df[label_col])
+    def from_df(df, text_col='spacy_text', pos_col='spacy_pos', label_col='label'):
+        return ExperimentData(df[text_col], df[pos_col], df['parse'], df[label_col], df)
 
 
 class ExperimentParameters:
