@@ -51,33 +51,49 @@ class WordIndexCache:
     _word_index_file = 'word_index.pkl'
 
     @staticmethod
-    def get_word_index():
-        if WordIndexCache.word_index is not None:
-            return WordIndexCache.word_index
+    def get_word_index(fail_if_missing=True):
+        if WordIndexCache._word_index is not None:
+            return WordIndexCache._word_index
 
-        embedding_path = os.path.join(DATA_DIRECTORY, WordIndexCache._word_index_file)
-        WordIndexCache.word_index = load_pickle(embedding_path)
-        if WordIndexCache.word_index is None:
-            raise Exception('Missing word vector embeddings file %s' % embedding_path)
+        cache_path = os.path.join(DATA_DIRECTORY, WordIndexCache._word_index_file)
+        WordIndexCache._word_index = load_pickle(cache_path)
+        if WordIndexCache._word_index is None and fail_if_missing:
+            raise Exception('Word index not initialized')
 
-        return WordIndexCache.word_index
+        return WordIndexCache._word_index
+
+    @staticmethod
+    def is_initialized():
+        return WordIndexCache.get_word_index(fail_if_missing=False) is not None
 
     @staticmethod
     def initialize(text):
-        tokenizer = Tokenizer(lower=False, oov_token='<OOV>')
-        tokenizer.fit_on_texts(text)
-        WordIndexCache._word_index = tokenizer
+        # tokenizer = Tokenizer(lower=False, oov_token='<OOV>')
+        # tokenizer.fit_on_texts(text)
+        # WordIndexCache._word_index = tokenizer
 
+        word_index = {}
+        word_index["<PAD>"] = 0
+        word_index["<OOV>"] = 1
+
+        i = 2
+        for token_list in text:
+            for token in token_list:
+                if token not in word_index:
+                    word_index[token] = i
+                    i += 1
+
+        WordIndexCache._word_index = word_index
         save_pickle(os.path.join(DATA_DIRECTORY, WordIndexCache._word_index_file), WordIndexCache._word_index)
         return WordIndexCache._word_index
 
 
 class EmbeddingsCache:
-    _embedding_file = 'embeddings.plk'
+    _embedding_file = 'wv_embeddings.plk'
     _embeddings_model = None
 
     @staticmethod
-    def get_embeddings():
+    def get_wv_embeddings():
 
         if EmbeddingsCache._embeddings_model is not None:
             return EmbeddingsCache._embeddings_model
@@ -86,6 +102,7 @@ class EmbeddingsCache:
         EmbeddingsCache._embeddings_model = load_pickle(embeddings_path)
 
         if EmbeddingsCache._embeddings_model is None:
+            print('Downloading glove embeddings...')
             EmbeddingsCache._embeddings_model = gensim_api.load('glove-wiki-gigaword-100')
 
         save_pickle(embeddings_path, EmbeddingsCache._embeddings_model)

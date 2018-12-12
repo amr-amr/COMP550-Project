@@ -10,7 +10,7 @@ Script Description:
 
 """
 from keras.layers import Dense, Input, CuDNNLSTM, Dropout, SpatialDropout1D, Bidirectional, Embedding, \
-    Concatenate, Lambda, Convolution1D, MaxPooling1D, Flatten
+    Concatenate, Lambda, Convolution1D, MaxPooling1D, Flatten, GlobalAveragePooling1D
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.layers.normalization import BatchNormalization
@@ -29,7 +29,7 @@ class TextSequence(Sequence):
     def __init__(self, data: ExperimentData, params: ExperimentParameters):
         self.data = data
         self.params = params
-        self.wv_model = EmbeddingsCache.get_embeddings()
+        self.wv_model = EmbeddingsCache.get_wv_embeddings()
         self.word_index = WordIndexCache.get_word_index()
 
     def __len__(self):
@@ -108,13 +108,13 @@ class ModelFactory:
     def word_index_input_tensor(params: ExperimentParameters):
         wi_input = Input(shape=(params.sent_dim,), name='word_index_input')
         word_index = WordIndexCache.get_word_index()
-        wv_cache = EmbeddingsCache.get_glove_100_model()
+        wv_cache = EmbeddingsCache.get_wv_embeddings()
         pretrained_wv = 0.1 * np.ones((len(word_index), params.wv_dim))
         for word, index in word_index.items():
             try:
                 pretrained_wv[index] = wv_cache[word]
             except:
-                pretrained_wv[index] = np.random.random(params.wv_dim)
+                pretrained_wv[index] = 0.2*(np.random.random(params.wv_dim) - 0.5)
 
         embedding_layer = Embedding(len(word_index), params.wv_dim, input_length=params.sent_dim,
                                     embeddings_initializer='glorot_normal', weights=[pretrained_wv],
@@ -143,7 +143,7 @@ class ModelFactory:
         model = Model(inputs=inputs, outputs=preds)
 
         model.compile(loss='binary_crossentropy',
-                      optimizer=Adam(lr=0.001, clipnorm=.25, beta_1=0.7, beta_2=0.99),
+                      optimizer='adam',
                       metrics=['accuracy'])
 
         return model
@@ -200,6 +200,25 @@ class ModelFactory:
         model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
         return model
 
+    @staticmethod
+    def create_ff_model(params: ExperimentParameters, wv_input_func, pos_input_func):
+
+        input_layer, inputs = pos_input_func(params, wv_input_func) if pos_input_func else wv_input_func(params)
+
+        if params.use_parse:
+            input_layer, inputs = ModelFactory.create_parse_filter_layer(params, input_layer, inputs)
+
+        x = GlobalAveragePooling1D()(input_layer)
+        x = Dense(128, activation='relu')(x)
+        x = Dense(64, activation='relu')(x)
+
+        x = Dropout(params.dropout, name='dropout_pred_%.2f' % params.dropout)(x)
+        model_output = Dense(1, activation='sigmoid')(x)
+
+        model = Model(inputs=inputs, outputs=model_output)
+        model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+        return model
+
     def create(self, params: ExperimentParameters):
 
         pos_input_func = None
@@ -212,6 +231,8 @@ class ModelFactory:
 
         if params.nn_model == 'cnn':
             return self.create_cnn_model(params, wv_input_func, pos_input_func)
+        elif params.nn_model == 'ff':
+            return self.create_ff_model(params, wv_input_func, pos_input_func)
         else:
             return self.create_lstm_model(params, wv_input_func, pos_input_func)
 

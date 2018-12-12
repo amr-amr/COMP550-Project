@@ -78,46 +78,34 @@ def load_imdb_dataset():
     return (train_x, train_labels), (test_x, test_labels)
 
 
-def extract_linguistic_data(force_reload=False):
-    test_df_file = os.path.join(DATA_DIRECTORY, 'df_test.pkl')
-    train_df_file = os.path.join(DATA_DIRECTORY, 'df_train.pkl')
+def preprocess_dataset(train_df_file, test_df_file, force_reload=False):
+    train_df_path = os.path.join(DATA_DIRECTORY, train_df_file)
+    test_df_path = os.path.join(DATA_DIRECTORY, test_df_file)
 
-    if not force_reload and os.path.exists(test_df_file) and os.path.exists(train_df_file):
-        print('Data %s, %s already exists' % (test_df_file, train_df_file))
-        return pd.read_pickle('df_train.pkl'), pd.read_pickle('df_test.pkl')
+    if not force_reload and os.path.exists(train_df_path) and os.path.exists(test_df_path):
+        print('Cached dataframes %s, %s already exists' % (train_df_path, test_df_path))
+        return pd.read_pickle(train_df_path), pd.read_pickle(test_df_path)
 
     extractor = LinguisticDataExtractor('en_core_web_md')
     df_results = []
-    for (x, y), partition in zip(load_imdb_dataset(), ('train', 'test')):
+    for (x, y), df_file in zip(load_imdb_dataset(), (train_df_file, test_df_file)):
         df = pd.DataFrame(columns=['text', 'spacy_text', 'spacy_pos', 'nltk_pos', 'parse', 'label'])
         df['text'] = x
         df['label'] = y
 
-        print('Starting to parse %s set' % partition)
+        print('Starting to process %s set' % df_file)
         start = time()
         df[['spacy_text', 'spacy_pos', 'nltk_pos', 'parse']] = df.apply(lambda row: extractor.parse_text(row['text']),
                                                                         axis=1,
                                                                         result_type='expand')
-        print('Took %d to parse %s set' % (time() - start, partition))
-        output_file = os.path.join(DATA_DIRECTORY, 'df_%s.pkl' % partition)
-        print('Saving %s set to %s' % (partition, output_file))
-        df.to_pickle(output_file)
+        print('Took %d to parse %s set' % (time() - start, df_file))
+        output_path = os.path.join(DATA_DIRECTORY, df_file)
+        print('Saving %s set to %s' % (df_file, output_path))
+        df.to_pickle(output_path)
         df_results.append(df)
 
     return df_results[0], df_results[1]
 
 
-def preprocess_dataset():
-    df_train, df_test = extract_linguistic_data()
-
-    if WordIndexCache.get_word_index() is not None:
-        return df_train, df_test
-
-    print('Assigning indices to all words...')
-    all_text = list(df_train['spacy_text']) + list(df_test['spacy_text'])
-    WordIndexCache.initialize(all_text)
-    return df_train, df_test
-
-
 if __name__ == '__main__':
-    preprocess_dataset()
+    preprocess_dataset('df_train.pkl', 'df_test.pkl')

@@ -13,15 +13,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from data_preprocessing import load_imdb_dataset
 from caching import WordIndexCache, EmbeddingsCache
+from keras.datasets import imdb
 
 
 def analyze_sentence_lengths(x_train):
     sent_word_counts = [len(x.split()) for x in x_train]
     _ = plt.hist(sent_word_counts, bins=[10 * x for x in range(200)])
 
-    plt.title("Sentence length frequency")
+    plt.title("Sentence length frequencies")
     plt.xlabel('Sentence length')
     plt.ylabel('Frequency')
+    plt.show()
 
     print("Mean: %f\nStdDev: %f\nMin: %f\nMax: %f\n"
           % (np.mean(sent_word_counts),
@@ -37,4 +39,9 @@ def calculate_oov(word_index, embeddings):
 if __name__ == '__main__':
     (train_x, train_labels), (test_x, test_labels) = load_imdb_dataset()
     analyze_sentence_lengths(train_x)
-    calculate_oov(WordIndexCache.get_word_index(), EmbeddingsCache.get_embeddings())
+
+    print('OOV embeddings percentage (imdb word index) = %f' %
+          calculate_oov(imdb.get_word_index(), EmbeddingsCache.get_wv_embeddings()))
+
+    print('OOV embeddings percentage = %f' %
+          calculate_oov(WordIndexCache.get_word_index(), EmbeddingsCache.get_wv_embeddings()))

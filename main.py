@@ -9,6 +9,7 @@ Data folder:    https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM
 Script Description:
 
 """
+from __future__ import print_function
 import os
 from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 import copy
@@ -20,7 +21,9 @@ from dtos import ExperimentData, ExperimentParameters
 from helpers import ensure_folder_exists
 from results_analysis import ModelResultsAnalyzer
 from data_preprocessing import preprocess_dataset
+
 import numpy as np
+from caching import WordIndexCache
 
 
 def train_dev_split(df_train_dev, train_percent=0.9):
@@ -78,6 +81,10 @@ class ExperimentWrapper:
     def evaluate_test_set(self, model, test_data: ExperimentData, params: ExperimentParameters, results_folder):
         test_generator = TextSequence(test_data, params)
         test_df = test_data.df
+
+        _, acc = model.evaluate_generator(test_generator)
+        print('Test accuracy = %f' % acc)
+
         y_pred = np.round(model.predict_generator(test_generator))
 
         labels = ['good', 'bad']
@@ -86,21 +93,25 @@ class ExperimentWrapper:
         mra = ModelResultsAnalyzer(test_df, labels, "true_label", ["y_pred_label"])
 
         metrics = mra.get_metrics("y_pred_label")
-        cm = mra.get_cm("y_pred_label")
+        confusion_matrix = mra.get_cm("y_pred_label")
         print(metrics)
-        print(cm)
+        print(confusion_matrix)
 
-        with open(os.path.join(results_folder, 'metrics.txt'), 'w') as fh:
-            fh.write(metrics)
-            fh.write(cm)
+        with open(os.path.join(results_folder, 'metrics.txt'), 'w') as f:
+            print(metrics, file=f)
+            print(confusion_matrix, file=f)
 
 
 if __name__ == '__main__':
-    df_train_dev, df_test = preprocess_dataset()
-    df_train, df_dev = train_dev_split(df_train_dev, 0.9)
+    df_train_val, df_test = preprocess_dataset('df_train.pkl', 'df_test.pkl')
+
+    if not WordIndexCache.is_initialized():
+        WordIndexCache.initialize(list(df_train_val['spacy_text']) + list(df_test['spacy_text']))
+
+    df_train, df_dev = train_dev_split(df_train_val, 0.9)
 
     experiment_wrapper = ExperimentWrapper()
-    exp_params = ExperimentParameters(dropout=0.5, epochs=10, batch_size=128)
+    exp_params = ExperimentParameters(nn_model='cnn', dropout=0.5, epochs=20, batch_size=128)
 
     experiment_wrapper.run(ExperimentData.from_df(df_train),
                            ExperimentData.from_df(df_dev),

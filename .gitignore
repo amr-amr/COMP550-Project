@@ -1,6 +1,7 @@
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
+**/*.hdf5
 glove-100.plk
 nltk_pos_int_dataframe.pkl
 nltk_pos_dataframe.pkl
@@ -9,6 +10,8 @@ spacy_data_training.pkl
 spacy_data_train.pkl
 df_test.pkl
 df_train.pkl
+word_index.pkl
+wv_embeddings.plk
 
 model_cnn.hdf5
 glove.6B.100d.txt
