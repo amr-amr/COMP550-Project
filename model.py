@@ -227,14 +227,16 @@ class ModelFactory:
         elif params.use_pos == 'one_hot':
             pos_input_func = self.pos_one_hot_input_tensor
 
-        wv_input_func = self.word_index_input_tensor  # if params.train_wv else self.input_tensor
+        wv_input_func = self.word_index_input_tensor
 
         if params.nn_model == 'cnn':
             return self.create_cnn_model(params, wv_input_func, pos_input_func)
         elif params.nn_model == 'ff':
             return self.create_ff_model(params, wv_input_func, pos_input_func)
-        else:
+        elif params.nn_model == 'lstm':
             return self.create_lstm_model(params, wv_input_func, pos_input_func)
+        else:
+            raise Exception('Unknown neural network model %s. Expected: cnn, ff, lstm' % params.nn_model)
 
 
 if __name__ == '__main__':

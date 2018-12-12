@@ -111,8 +111,21 @@ if __name__ == '__main__':
     df_train, df_dev = train_dev_split(df_train_val, 0.9)
 
     experiment_wrapper = ExperimentWrapper()
-    exp_params = ExperimentParameters(nn_model='cnn', dropout=0.5, epochs=20, batch_size=128)
 
-    experiment_wrapper.run(ExperimentData.from_df(df_train),
-                           ExperimentData.from_df(df_dev),
-                           ExperimentData.from_df(df_test), exp_params)
+    dropout = 0.5
+    epochs = 20
+    pos_dim = 10
+    batch_size = 128
+    nn_models = ['cnn', 'lstm', 'ff']
+    train_wv = [False, True]
+    use_pos = [None, 'embed', 'one_hot']
+    use_parse = [None, 'filt', 'concat']
+
+    exp_params = [ExperimentParameters(nn_model=nn, dropout=dropout, epochs=epochs,
+                                       batch_size=batch_size, train_wv=wvt, use_pos=upos, use_parse=uparse)
+                  for nn in nn_models for wvt in train_wv for upos in use_pos for uparse in use_parse]
+
+    for ep in exp_params:
+        experiment_wrapper.run(ExperimentData.from_df(df_train),
+                               ExperimentData.from_df(df_dev),
+                               ExperimentData.from_df(df_test), ep)
