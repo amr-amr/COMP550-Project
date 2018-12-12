@@ -65,11 +65,11 @@ class TextSequence(Sequence):
         return wi_tensor
 
     def parse_process(self, parse):
-        parse_tensor = np.eye(self.params.sent_dim)
+        parse_tensor = np.zeros((self.params.sent_dim, self.params.sent_dim))
         for i, dep in zip(range(self.params.sent_dim), parse):
             j = dep[1]  # head of word at index i
             if j < self.params.sent_dim and i < self.params.sent_dim and j != i:
-                parse_tensor[i][j] = -1
+                parse_tensor[i][j] = 1
         return parse_tensor
 
 
@@ -114,7 +114,7 @@ class ModelFactory:
             try:
                 pretrained_wv[index] = wv_cache[word]
             except:
-                pretrained_wv[index] = 0.2*(np.random.random(params.wv_dim) - 0.5)
+                pretrained_wv[index] = 0.2 * (np.random.random(params.wv_dim) - 0.5)
 
         embedding_layer = Embedding(len(word_index), params.wv_dim, input_length=params.sent_dim,
                                     embeddings_initializer='glorot_normal', weights=[pretrained_wv],
@@ -152,7 +152,7 @@ class ModelFactory:
     def create_parse_filter_layer(params: ExperimentParameters, input_layer, inputs):
         filter_mat_input = Input(shape=(params.sent_dim, params.sent_dim), name='filter_input')
         filter_data_dim = params.wv_dim + (params.pos_dim if params.use_pos else 0)
-        parse_output_layer = Lambda(lambda x: K.batch_dot(x[0], x[1]),
+        parse_output_layer = Lambda(lambda x: x[1] * K.batch_dot(x[0], x[1]),
                                     output_shape=(params.sent_dim, filter_data_dim),
                                     name='parse_layer')([filter_mat_input, input_layer])
 
