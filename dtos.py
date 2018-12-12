@@ -32,7 +32,7 @@ class ExperimentParameters:
 
     def __init__(self, batch_size=256, wv_type='gensim-glove-100',
                  train_wv=False,
-                 use_pos=None, use_parse=False, pos_dict_len=None, sent_dim=200, wv_dim=100,
+                 use_pos=None, use_parse=None, pos_dict_len=None, sent_dim=200, wv_dim=100,
                  pos_dim=None, epochs=20, dropout=0.5, nn_model='lstm'):
         self.batch_size = batch_size
         self.wv_type = wv_type
