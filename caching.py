@@ -1,6 +1,10 @@
 """
-Comp 550 - Final Project - Augmenting Word Embeddings using Additional Linguistic Information
+Comp 550 - Final Project - Fall 2018
+Augmenting Word Embeddings using Additional Linguistic Information
 Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+
+Github:         https://github.com/amr-amr/COMP550-Project
+Data folder:    https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
 
 Script Description:
 
@@ -11,6 +15,8 @@ from keras.datasets import imdb
 from keras.preprocessing.text import Tokenizer
 from nltk import load
 from constants import DATA_DIRECTORY
+from helpers import save_pickle, load_pickle
+import gensim.downloader as gensim_api
 
 
 class PosDictionary:
@@ -41,46 +47,47 @@ class PosDictionary:
 
 
 class WordIndexCache:
-    word_index = None
+    _word_index = None
+    _word_index_file = 'word_index.pkl'
 
     @staticmethod
     def get_word_index():
-        if WordIndexCache.word_index is None:
-            word_index = imdb.get_word_index()
-            word_index = {k: (v + 3) for k, v in word_index.items()}
-            word_index["<PAD>"] = 0
-            word_index["<START>"] = 1
-            word_index["<UNK>"] = 2  # unknown
-            word_index["<UNUSED>"] = 3
+        if WordIndexCache.word_index is not None:
+            return WordIndexCache.word_index
 
-            WordIndexCache.word_index = word_index
+        embedding_path = os.path.join(DATA_DIRECTORY, WordIndexCache._word_index_file)
+        WordIndexCache.word_index = load_pickle(embedding_path)
+        if WordIndexCache.word_index is None:
+            raise Exception('Missing word vector embeddings file %s' % embedding_path)
 
         return WordIndexCache.word_index
-
-
-class EmbeddingsCache:
-    embedding_model = None
-    embedding_path = 'embeddings.plk'
-
-    @staticmethod
-    def get_embedding():
-        if EmbeddingsCache.embedding_model is not None:
-            return EmbeddingsCache.embedding_model
-
-        embedding_path = os.path.join(DATA_DIRECTORY, EmbeddingsCache.embedding_path)
-        if os.path.isfile(embedding_path):
-            return pickle.load(open(embedding_path, 'rb'))
-
-        raise Exception('Missing word vector embeddings file %s' % embedding_path)
 
     @staticmethod
     def initialize(train_text, test_text):
         all_text = train_text + test_text
         tokenizer = Tokenizer(lower=False, oov_token='<OOV>')
         tokenizer.fit_on_texts(all_text)
-        EmbeddingsCache.embedding_model = tokenizer
+        WordIndexCache._word_index = tokenizer
 
-        with open(os.path.join(DATA_DIRECTORY, EmbeddingsCache.embedding_path), 'wb') as f:
-            pickle.dump(EmbeddingsCache.embedding_model, f)
+        save_pickle(os.path.join(DATA_DIRECTORY, WordIndexCache._word_index_file), WordIndexCache._word_index)
+        return WordIndexCache._word_index
 
-        return EmbeddingsCache.embedding_model
+
+class EmbeddingsCache:
+    _embedding_file = 'embeddings.plk'
+    _embeddings_model = None
+
+    @staticmethod
+    def get_embeddings():
+
+        if EmbeddingsCache._embeddings_model is not None:
+            return EmbeddingsCache._embeddings_model
+
+        embeddings_path = os.path.join(DATA_DIRECTORY, EmbeddingsCache._embedding_file)
+        EmbeddingsCache._embeddings_model = load_pickle(embeddings_path)
+
+        if EmbeddingsCache._embeddings_model is None:
+            EmbeddingsCache._embeddings_model = gensim_api.load('glove-wiki-gigaword-100')
+
+        save_pickle(embeddings_path, EmbeddingsCache._embeddings_model)
+        return EmbeddingsCache._embeddings_model

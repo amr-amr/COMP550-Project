@@ -1,15 +1,20 @@
 """
-Comp 550 - Final Project - Augmenting Word Embeddings using Additional Linguistic Information
+Comp 550 - Final Project - Fall 2018
+Augmenting Word Embeddings using Additional Linguistic Information
 Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
 
-Script Description:
+Github:                 https://github.com/amr-amr/COMP550-Project
+Public Data folder:     https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
 
+Script Description:
+Script containing classes related to the analysis of prediction results reported from trained models
 """
 import pandas as pd
 import numpy as np
 
 
 class ModelResultsAnalyzer:
+
     def __init__(self, pred_df, labels, true_y_col, model_pred_cols):
         self.df = pred_df
         self.labels = labels

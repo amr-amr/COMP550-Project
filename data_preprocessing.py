@@ -1,6 +1,10 @@
 """
-Comp 550 - Final Project - Augmenting Word Embeddings using Additional Linguistic Information
+Comp 550 - Final Project - Fall 2018
+Augmenting Word Embeddings using Additional Linguistic Information
 Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+
+Github:                 https://github.com/amr-amr/COMP550-Project
+Public Data folder:     https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
 
 Script Description:
 
@@ -13,6 +17,7 @@ import spacy
 from keras.datasets import imdb
 from nltk import pos_tag as pos_tagger
 from caching import PosDictionary
+from constants import DATA_DIRECTORY
 
 
 class LinguisticDataExtractor:
@@ -51,7 +56,7 @@ class LinguisticDataExtractor:
         return spacy_text, spacy_pos_tags, nltk_pos_tags, parse_tree
 
 
-def download_imdb_dataset():
+def load_imdb_dataset():
     (train_data, train_labels), (test_data, test_labels) = imdb.load_data()
 
     # convert from integers to text
@@ -72,9 +77,9 @@ def download_imdb_dataset():
     return (train_x, train_labels), (test_x, test_labels)
 
 
-def preprocess_imdb_dataset(output_dir):
-    extractor = LinguisticDataExtractor("en_core_web_md")
-    for (x, y), partition in zip(download_imdb_dataset(), ('train', 'test')):
+def preprocess_imdb_dataset(output_dir, spacy_model):
+    extractor = LinguisticDataExtractor(spacy_model)
+    for (x, y), partition in zip(load_imdb_dataset(), ('train', 'test')):
         df = pd.DataFrame(columns=['text', 'spacy_text', 'spacy_pos', 'nltk_pos', 'parse', 'label'])
         df['text'] = x
         df['label'] = y
@@ -91,4 +96,4 @@ def preprocess_imdb_dataset(output_dir):
 
 
 if __name__ == '__main__':
-    preprocess_imdb_dataset('./data')
+    preprocess_imdb_dataset(DATA_DIRECTORY, "en_core_web_md")

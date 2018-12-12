@@ -1,6 +1,10 @@
 """
-Comp 550 - Final Project - Augmenting Word Embeddings using Additional Linguistic Information
+Comp 550 - Final Project - Fall 2018
+Augmenting Word Embeddings using Additional Linguistic Information
 Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+
+Github:                 https://github.com/amr-amr/COMP550-Project
+Public Data folder:     https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
 
 Script Description:
 
@@ -25,8 +29,7 @@ class TextSequence(Sequence):
     def __init__(self, data: ExperimentData, params: ExperimentParameters):
         self.data = data
         self.params = params
-        self.wv_model = EmbeddingsCache.get_embedding()
-        self.ovv_count = 0
+        self.wv_model = EmbeddingsCache.get_embeddings()
         self.word_index = WordIndexCache.get_word_index()
 
     def __len__(self):
