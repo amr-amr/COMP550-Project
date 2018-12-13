@@ -229,14 +229,10 @@ class TestResultsManager:
 
         if not baseline_model.empty:
             baseline_metrics = baseline_model.iloc[0]
-            df['acc_vs_baseline'] = df.loc[df['baseline'] == baseline] \
-                .apply(lambda x: x['accuracy'] - baseline_metrics['accuracy'], axis=1)
-            df['f1-score_vs_baseline'] = df.loc[df['baseline'] == baseline] \
-                .apply(lambda x: x['f1-score'] - baseline_metrics['f1-score'], axis=1)
-            df['precision_vs_baseline'] = df.loc[df['baseline'] == baseline] \
-                .apply(lambda x: x['precision'] - baseline_metrics['precision'], axis=1)
-            df['recall_vs_baseline'] = df.loc[df['baseline'] == baseline] \
-                .apply(lambda x: x['recall'] - baseline_metrics['recall'], axis=1)
+            df['acc_vs_baseline'] = df.apply(lambda x: x['accuracy'] - baseline_metrics['accuracy'] if x['baseline'] == baseline else x['acc_vs_baseline'], axis=1)
+            df['f1-score_vs_baseline'] = df.apply(lambda x: x['f1-score'] - baseline_metrics['f1-score'] if x['baseline'] == baseline else x['f1-score_vs_baseline'], axis=1)
+            df['precision_vs_baseline'] = df.apply(lambda x: x['precision'] - baseline_metrics['precision'] if x['baseline'] == baseline else x['precision_vs_baseline'], axis=1)
+            df['recall_vs_baseline'] = df.apply(lambda x: x['recall'] - baseline_metrics['recall'] if x['baseline'] == baseline else x['recall_vs_baseline'], axis=1)
 
         self._df_lookup[params.nn_model] = (df, results_path)
         df.to_csv(results_path, index=False)
