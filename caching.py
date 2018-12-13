@@ -1,7 +1,7 @@
 """
 Comp 550 - Final Project - Fall 2018
 Evaluating Addition of Syntactic Information in Deep Learning Models for Sentiment Analysis
-Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+Group 1 - Andrei Romascanu (260585208) - Stefan Wapnick (id 260461342)
 Implemented using Python 3, keras and tensorflow
 
 Github:         https://github.com/amr-amr/COMP550-Project
