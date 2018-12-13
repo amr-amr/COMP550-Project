@@ -130,14 +130,14 @@ if __name__ == '__main__':
     # use_parse = [None, 'filt', 'concat']
     # ---------------------------------
     dropout = 0.5
-    epochs = 20
+    epochs = 30
     pos_dim = 10
     batch_size = 256
     sent_dim = [300]
     nn_models = ['lstm', 'cnn', 'ff']
     train_wv = [False, True]
     use_pos = [None, 'embed', 'one_hot']
-    use_parse = [None]
+    use_parse = ['filt']
 
     # Load data
     df_train_val, df_test = load_data('df_train.pkl', 'df_test.pkl')
