@@ -1,0 +1,7 @@
+model,sent_dim,train_wv,use_pos,use_parse,baseline,accuracy,f1-score,precision,recall,acc_vs_baseline,f1-score_vs_baseline,precision_vs_baseline,recall_vs_baseline
+cnn_400-sentdim_False-trainwv,400,False,None,None,cnn_400-sentdim_False-trainwv,0.83684,0.8351719400331353,0.8437984812607169,0.82672,,,,
+cnn_400-sentdim_False-trainwv_0.50-dropout_embed-10-pos_None-parse,400,False,embed,None,cnn_400-sentdim_False-trainwv,0.84156,0.8412361216882441,0.842959273837256,0.83952,,,,
+cnn_400-sentdim_False-trainwv_0.50-dropout_one_hot-10-pos_None-parse,400,False,one_hot,None,cnn_400-sentdim_False-trainwv,0.8402,0.8452090356077339,0.8195206251408821,0.87256,,,,
+cnn_400-sentdim_True-trainwv,400,True,None,None,cnn_400-sentdim_True-trainwv,0.88424,0.8821949035251976,0.8980606663351567,0.86688,0.0,0.0,0.0,0.0
+cnn_400-sentdim_True-trainwv_0.50-dropout_embed-10-pos_None-parse,400,True,embed,None,cnn_400-sentdim_True-trainwv,0.88288,0.8808011724474842,0.8967175066312998,0.86544,-0.0013600000000000279,-0.001393731077713345,-0.0013431597038568999,-0.0014399999999999968
+cnn_400-sentdim_True-trainwv_0.50-dropout_one_hot-10-pos_None-parse,400,True,one_hot,None,cnn_400-sentdim_True-trainwv,0.88208,0.8805800858786357,0.8919251600196947,0.86952,-0.0021600000000000508,-0.0016148176465619057,-0.006135506315462003,0.0026399999999999757

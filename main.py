@@ -133,11 +133,11 @@ if __name__ == '__main__':
     epochs = 20
     pos_dim = 10
     batch_size = 128
-    sent_dim = [300]
+    sent_dim = [400]
     nn_models = ['lstm', 'cnn', 'ff']
     train_wv = [False, True]
     use_pos = [None, 'embed', 'one_hot']
-    use_parse = [None, 'filt']
+    use_parse = [None]
 
     # Load data
     df_train_val, df_test = load_data('df_train.pkl', 'df_test.pkl')
