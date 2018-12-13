@@ -1,6 +1,6 @@
 """
 Comp 550 - Final Project - Fall 2018
-Effect of Additional Linguistic Information on Word Embeddings
+Evaluating Addition of Syntactic Information in Deep Learning Models for Sentiment Analysis
 Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
 Implemented using Python 3, keras and tensorflow
 
