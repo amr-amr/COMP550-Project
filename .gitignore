@@ -15,6 +15,10 @@ wv_embeddings.plk
 df_test_new.pkl
 df_train_new.pkl
 
+~$aclhlt2016.dotx
+~$Report.docx
+~$sultsTables.docx
+
 model_cnn.hdf5
 glove.6B.100d.txt
 *.aux
