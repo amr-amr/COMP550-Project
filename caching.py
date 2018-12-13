@@ -89,8 +89,6 @@ class EmbeddingsCache:
     _embedding_file = 'wv_embeddings.plk'
     _embeddings_model = None
 
-    _init_embeddings_cache = {}
-
     @staticmethod
     def get_wv_embeddings():
 
