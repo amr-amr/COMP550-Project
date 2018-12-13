@@ -168,7 +168,6 @@ class ModelFactory:
     @staticmethod
     def create_cnn_model(params: ExperimentParameters, wv_input_func, pos_input_func):
 
-        # input_layer = Input(shape=(params.sent_dim, params.wv_dim), name='input')
         input_layer, inputs = pos_input_func(params, wv_input_func) if pos_input_func else wv_input_func(params)
 
         if params.use_parse:
