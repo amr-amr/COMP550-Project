@@ -1,13 +1,14 @@
 """
 Comp 550 - Final Project - Fall 2018
-Augmenting Word Embeddings using Additional Linguistic Information
+Effects of Additional Linguistic Information on Word Embeddings
 Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+Implemented using Python 3, keras and tensorflow
 
 Github:                 https://github.com/amr-amr/COMP550-Project
 Public Data folder:     https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
 
 Script Description:
-
+Contains classes and functions related to data preparation
 """
 import os
 from time import time
@@ -18,10 +19,12 @@ from keras.datasets import imdb
 from nltk import pos_tag as pos_tagger
 from caching import PosDictionary
 from constants import DATA_DIRECTORY
-from caching import WordIndexCache
 
 
 class LinguisticDataExtractor:
+    """
+    Utility class for extracting POS and dependency tree information from text
+    """
     def __init__(self, spacy_model="en_core_web_lg"):
         self.spacy_pos_dict = PosDictionary.spacy
         self.nltk_pos_dict = PosDictionary.nltk
@@ -29,6 +32,9 @@ class LinguisticDataExtractor:
         self.processed_counter = 0
 
     def parse_text(self, text):
+        """
+        Extracts POS and dependency tree information from the input text
+        """
         spacy_pos_tags = []
         parse_tree = []
         spacy_text = []
@@ -57,6 +63,9 @@ class LinguisticDataExtractor:
 
 
 def load_imdb_dataset():
+    """
+    Downloads the imdb movie review dataset, returning text sets for training and test.
+    """
     (train_data, train_labels), (test_data, test_labels) = imdb.load_data()
 
     # convert from integers to text
@@ -78,6 +87,11 @@ def load_imdb_dataset():
 
 
 def load_data(train_df_file, test_df_file, force_reload=False):
+    """
+    Loads and pre-processes the imdb text dataset, extracting POS and dependency parse tree information
+    for each sentence. Returns a dataframe representation of all sentences along with their POS and dependency parse
+    tree information
+    """
     train_df_path = os.path.join(DATA_DIRECTORY, train_df_file)
     test_df_path = os.path.join(DATA_DIRECTORY, test_df_file)
 

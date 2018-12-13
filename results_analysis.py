@@ -1,7 +1,8 @@
 """
 Comp 550 - Final Project - Fall 2018
-Augmenting Word Embeddings using Additional Linguistic Information
+Effects of Additional Linguistic Information on Word Embeddings
 Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+Implemented using Python 3, keras and tensorflow
 
 Github:                 https://github.com/amr-amr/COMP550-Project
 Public Data folder:     https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
@@ -17,7 +18,11 @@ from dtos import ExperimentParameters
 
 
 class ModelResultsAnalyzer:
-
+    """
+    Analyzes the prediction results of a model as compared to the expected results.
+    Capable of computing basic metrics (accuracy, f1score, precision, recall) and sampling text sequences
+    were that were classified differently between two models.
+    """
     def __init__(self, pred_df, labels, true_y_col, model_pred_cols):
         self.df = pred_df
         self.labels = labels
@@ -81,9 +86,15 @@ class ModelResultsAnalyzer:
         return df_cm_dict
 
     def get_cm(self, model):
+        """
+        Retrieves the confusion matrix for the model
+        """
         return self.df_cm_dict[model]
 
     def get_metrics(self, model):
+        """
+        Retrieves basic metric data for the model (accuracy, f1score, precision, recall)
+        """
         metrics = {}
         metrics["accuracy"] = 0
         cm = self.df_cm_dict[model]
@@ -104,6 +115,9 @@ class ModelResultsAnalyzer:
         return metrics
 
     def get_samples(self, text_col, model, true_y, pred_y, baseline_model=None):
+        """
+        Retrieves sample text items that were classified differently between t2 models
+        """
         true_l = "true_" + true_y
         pred_l = "pred_" + pred_y
         df = self.df_counts
@@ -153,6 +167,9 @@ class ModelResultsAnalyzer:
 
 
 class TestResultsManager:
+    """
+    Keeps an aggregate of all metrics and compares these metrics with a baseline mdoel
+    """
 
     def __init__(self):
 
@@ -173,7 +190,9 @@ class TestResultsManager:
             self._df_lookup[nn_model] = (df, file_path)
 
     def save_result(self, params: ExperimentParameters, metrics):
-
+        """
+        Save a new experiment model and computed metrics
+        """
         baseline = params.get_baseline()
         model_name = baseline if params.is_baseline() else params.get_name()
         (df, results_path) = self._df_lookup[params.nn_model]

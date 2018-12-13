@@ -1,13 +1,14 @@
 """
 Comp 550 - Final Project - Fall 2018
-Augmenting Word Embeddings using Additional Linguistic Information
+Effects of Additional Linguistic Information on Word Embeddings
 Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+Implemented using Python 3, keras and tensorflow
 
 Github:                 https://github.com/amr-amr/COMP550-Project
 Public Data folder:     https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
 
 Script Description:
-
+Contains simple data transfer objects
 """
 from caching import PosDictionary
 import datetime
@@ -16,7 +17,9 @@ import copy
 
 
 class ExperimentData:
-
+    """
+    Wrapper for experiment data
+    """
     def __init__(self, x, x_pos, x_parse, y, df):
         self.y = y
         self.x = x
@@ -30,7 +33,9 @@ class ExperimentData:
 
 
 class ExperimentParameters:
-
+    """
+    Wrapper for experiment parameters
+    """
     def __init__(self, batch_size=256, train_wv=False,
                  use_pos=None, use_parse=None, pos_dict_len=None, sent_dim=300, wv_dim=100,
                  pos_dim=None, epochs=20, dropout=0.5, nn_model='lstm'):

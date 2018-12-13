@@ -1,13 +1,14 @@
 """
 Comp 550 - Final Project - Fall 2018
-Augmenting Word Embeddings using Additional Linguistic Information
+Effects of Additional Linguistic Information on Word Embeddings
 Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+Implemented using Python 3, keras and tensorflow
 
 Github:         https://github.com/amr-amr/COMP550-Project
 Data folder:    https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
 
 Script Description:
-
+Root script of the program. Loads the dataset, queues model experiments, trains and evaluates each model.
 """
 from __future__ import print_function
 import os
@@ -27,11 +28,18 @@ from caching import WordIndexCache
 
 
 def train_dev_split(df_train_dev, train_percent=0.9):
+    """
+    Splits a set into training and dev partitions
+    """
     nb_train = int(len(df_train_dev) * train_percent)
     return df_train_dev[:nb_train], df_train_dev[nb_train:]
 
 
 class ExperimentWrapper:
+    """
+    Manages the execution of each experiment model tested
+    Trains the model and evaluates its validation and test accuracy
+    """
 
     def __init__(self):
         self.model_factory = ModelFactory()
@@ -39,6 +47,9 @@ class ExperimentWrapper:
 
     def run(self, train_data: ExperimentData, dev_data: ExperimentData,
             test_data: ExperimentData, params: ExperimentParameters):
+        """
+        Runs the experiment model. Trains the model and computes validation and test accuracies
+        """
         results_folder = os.path.join(DATA_DIRECTORY, 'results', params.file_name())
         ensure_folder_exists(results_folder)
 
@@ -80,6 +91,10 @@ class ExperimentWrapper:
         self.evaluate_test_set(model, test_data, params, results_folder)
 
     def evaluate_test_set(self, model, test_data: ExperimentData, params: ExperimentParameters, results_folder):
+        """
+        Evaluates test accuracies on a model
+        """
+
         test_generator = TextSequence(test_data, params)
         test_df = test_data.df
 
@@ -119,20 +134,24 @@ if __name__ == '__main__':
     pos_dim = 10
     batch_size = 256
     sent_dim = [300]
-    nn_models = ['ff']
-    train_wv = [False]
-    use_pos = [None]
+    nn_models = ['lstm', 'cnn', 'ff']
+    train_wv = [False, True]
+    use_pos = [None, 'embed', 'one_hot']
     use_parse = [None]
 
+    # Load data
     df_train_val, df_test = load_data('df_train.pkl', 'df_test.pkl')
 
+    # Initialize word index cache
     if not WordIndexCache.is_initialized():
         WordIndexCache.initialize(list(df_train_val['spacy_text']) + list(df_test['spacy_text']))
 
+    # Train/dev split
     df_train, df_dev = train_dev_split(df_train_val)
 
+    # Run all experiments
     experiment_wrapper = ExperimentWrapper()
-    exp_params = [ExperimentParameters(nn_model=nn, dropout=dropout, epochs=epochs, sent_dim=sd,
+    exp_params = [ExperimentParameters(nn_model=nn, dropout=dropout, epochs=epochs, sent_dim=sd, pos_dim=pos_dim,
                                        batch_size=batch_size, train_wv=wvt, use_pos=upos, use_parse=uparse)
                   for nn in nn_models for sd in sent_dim for wvt in train_wv for upos in use_pos for uparse in use_parse]
 

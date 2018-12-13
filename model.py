@@ -1,13 +1,14 @@
 """
 Comp 550 - Final Project - Fall 2018
-Augmenting Word Embeddings using Additional Linguistic Information
+Effects of Additional Linguistic Information on Word Embeddings
 Group 1 - Andrei Mircea (260585208) - Stefan Wapnick (id 260461342)
+Implemented using Python 3, keras and tensorflow
 
 Github:                 https://github.com/amr-amr/COMP550-Project
 Public Data folder:     https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
 
 Script Description:
-
+Contains classes related to processing of the machine learning model
 """
 from keras.layers import Dense, Input, CuDNNLSTM, Dropout, SpatialDropout1D, Bidirectional, Embedding, \
     Concatenate, Lambda, Convolution1D, MaxPooling1D, Flatten, GlobalAveragePooling1D
@@ -25,7 +26,9 @@ from dtos import ExperimentParameters, ExperimentData
 
 
 class TextSequence(Sequence):
-
+    """
+    Custom keras sequence class. A sequence class acts as a generator when supplying training, validation or test data
+    """
     def __init__(self, data: ExperimentData, params: ExperimentParameters):
         self.data = data
         self.params = params
@@ -73,10 +76,14 @@ class TextSequence(Sequence):
 
 
 class ModelFactory:
-
+    """
+    Factory for creating different machine learning models (such as cnn or lstm models)
+    """
     @staticmethod
     def pos_input_tensor(params: ExperimentParameters, wv_input_func):
-
+        """
+        Creates an input layer to support pos tags feature inputs with an embedding layer
+        """
         wv_input_layer, wv_input = wv_input_func(params)
         pos_input = Input(shape=(params.sent_dim,), name='pos_input')
 
@@ -90,7 +97,9 @@ class ModelFactory:
 
     @staticmethod
     def pos_one_hot_input_tensor(params: ExperimentParameters, wv_input_func):
-
+        """
+        Creates an input layer to support pos tags feature inputs using one-hot encoding
+        """
         wv_input_layer, wv_input = wv_input_func(params)
         pos_input = Input(shape=(params.sent_dim,), dtype='uint8', name='pos_input')
 
@@ -104,7 +113,10 @@ class ModelFactory:
         return concatenate_layer, [wv_input, pos_input]
 
     @staticmethod
-    def word_index_input_tensor(params: ExperimentParameters):
+    def wv_input_input_tensor(params: ExperimentParameters):
+        """
+        Creates a word vector input layer
+        """
         wi_input = Input(shape=(params.sent_dim,), name='word_index_input')
         word_index = WordIndexCache.get_word_index()
         wv_cache = EmbeddingsCache.get_wv_embeddings()
@@ -122,12 +134,17 @@ class ModelFactory:
 
     @staticmethod
     def input_tensor(params: ExperimentParameters):
+        """
+        Creates a basic input layer
+        """
         input_layer = Input(shape=(params.sent_dim, params.wv_dim), name='input')
         return input_layer, input_layer
 
     @staticmethod
     def create_lstm_model(params: ExperimentParameters, wv_input_func, pos_input_func):
-
+        """
+        Creates the keras model for a lstm network using the specified word vector and pos tag input layers
+        """
         input_layer, inputs = pos_input_func(params, wv_input_func) if pos_input_func else wv_input_func(params)
 
         if params.use_parse:
@@ -149,6 +166,9 @@ class ModelFactory:
 
     @staticmethod
     def create_parse_filter_layer(params: ExperimentParameters, input_layer, inputs):
+        """
+        Creates the a layer that encodes the dependency parse tree
+        """
         filter_mat_input = Input(shape=(params.sent_dim, params.sent_dim), name='filter_input')
         filter_data_dim = params.wv_dim + (params.pos_dim if params.use_pos else 0)
         parse_output_layer = Lambda(lambda x: x[1] * K.batch_dot(x[0], x[1]),
@@ -167,7 +187,9 @@ class ModelFactory:
 
     @staticmethod
     def create_cnn_model(params: ExperimentParameters, wv_input_func, pos_input_func):
-
+        """
+        Creates the keras model for a cnn network using the specified word vector and pos tag input layers
+        """
         input_layer, inputs = pos_input_func(params, wv_input_func) if pos_input_func else wv_input_func(params)
 
         if params.use_parse:
@@ -200,7 +222,9 @@ class ModelFactory:
 
     @staticmethod
     def create_ff_model(params: ExperimentParameters, wv_input_func, pos_input_func):
-
+        """
+        Creates the keras model for a feed forward network using the specified word vector and pos tag input layers
+        """
         input_layer, inputs = pos_input_func(params, wv_input_func) if pos_input_func else wv_input_func(params)
 
         if params.use_parse:
@@ -218,14 +242,16 @@ class ModelFactory:
         return model
 
     def create(self, params: ExperimentParameters):
-
+        """
+        Creates a new neural network keras model based on the experiment parameters
+        """
         pos_input_func = None
         if params.use_pos == 'embed':
             pos_input_func = self.pos_input_tensor
         elif params.use_pos == 'one_hot':
             pos_input_func = self.pos_one_hot_input_tensor
 
-        wv_input_func = self.word_index_input_tensor
+        wv_input_func = self.wv_input_input_tensor
 
         if params.nn_model == 'cnn':
             return self.create_cnn_model(params, wv_input_func, pos_input_func)

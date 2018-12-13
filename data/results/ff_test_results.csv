@@ -1,0 +1,7 @@
+model,sent_dim,train_wv,use_pos,use_parse,baseline,accuracy,f1-score,precision,recall,acc_vs_baseline,f1-score_vs_baseline,precision_vs_baseline,recall_vs_baseline
+ff_300-sentdim_False-trainwv,300,False,None,None,ff_300-sentdim_False-trainwv,0.78312,0.7825633622072506,0.784577034416211,0.78056,,,,
+ff_300-sentdim_False-trainwv_0.50-dropout_embed-10-pos_None-parse,300,False,embed,None,ff_300-sentdim_False-trainwv,0.78824,0.7867214567722183,0.7924038305469892,0.78112,,,,
+ff_300-sentdim_False-trainwv_0.50-dropout_one_hot-10-pos_None-parse,300,False,one_hot,None,ff_300-sentdim_False-trainwv,0.7882,0.7867413105642596,0.7921972584962284,0.78136,,,,
+ff_300-sentdim_True-trainwv,300,True,None,None,ff_300-sentdim_True-trainwv,0.86908,0.8704531961211162,0.8614179396788092,0.87968,0.0,0.0,0.0,0.0
+ff_300-sentdim_True-trainwv_0.50-dropout_embed-10-pos_None-parse,300,True,embed,None,ff_300-sentdim_True-trainwv,0.86848,0.8690457224788911,0.8653236040609137,0.8728,-0.0005999999999999339,-0.0014074736422250433,0.00390566438210449,-0.006879999999999997
+ff_300-sentdim_True-trainwv_0.50-dropout_one_hot-10-pos_None-parse,300,True,one_hot,None,ff_300-sentdim_True-trainwv,0.86832,0.8718068535825546,0.8493171471927162,0.89552,-0.0007599999999999829,0.0013536574614384511,-0.01210079248609297,0.015839999999999965
