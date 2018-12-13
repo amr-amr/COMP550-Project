@@ -1,0 +1,13 @@
+model,sent_dim,train_wv,use_pos,use_parse,baseline,accuracy,f1-score,precision,recall,acc_vs_baseline,f1-score_vs_baseline,precision_vs_baseline,recall_vs_baseline
+cnn_300-sentdim_False-trainwv,300,False,None,None,cnn_300-sentdim_False-trainwv,0.83388,0.839509989566024,0.8119907303580773,0.86896,,,,
+cnn_300-sentdim_False-trainwv_0.50-dropout_None-10-pos_filt-parse,300,False,None,filt,cnn_300-sentdim_False-trainwv,0.75568,0.7732402732402732,0.7213909670268772,0.83312,,,,
+cnn_300-sentdim_False-trainwv_0.50-dropout_embed-10-pos_None-parse,300,False,embed,None,cnn_300-sentdim_False-trainwv,0.82832,0.8290039840637451,0.8257142857142857,0.83232,,,,
+cnn_300-sentdim_False-trainwv_0.50-dropout_embed-10-pos_filt-parse,300,False,embed,filt,cnn_300-sentdim_False-trainwv,0.77064,0.781145038167939,0.7469343065693431,0.81864,,,,
+cnn_300-sentdim_False-trainwv_0.50-dropout_one_hot-10-pos_None-parse,300,False,one_hot,None,cnn_300-sentdim_False-trainwv,0.82684,0.8323976925161639,0.8065121164378423,0.86,,,,
+cnn_300-sentdim_False-trainwv_0.50-dropout_one_hot-10-pos_filt-parse,300,False,one_hot,filt,cnn_300-sentdim_False-trainwv,0.74544,0.7745820345706999,0.6950165268243071,0.87472,,,,
+cnn_300-sentdim_True-trainwv,300,True,None,None,cnn_300-sentdim_True-trainwv,0.87892,0.8801140639233237,0.8715193348497922,0.88888,0.0,0.0,0.0,0.0
+cnn_300-sentdim_True-trainwv_0.50-dropout_None-10-pos_filt-parse,300,True,None,filt,cnn_300-sentdim_True-trainwv,0.85724,0.8548065579105814,0.8696299975167618,0.84048,-0.021680000000000033,-0.025307506012742342,-0.0018893373330303165,-0.0484
+cnn_300-sentdim_True-trainwv_0.50-dropout_embed-10-pos_None-parse,300,True,embed,None,cnn_300-sentdim_True-trainwv,0.87956,0.8802926092315032,0.8749703627598198,0.88568,0.0006399999999999739,0.00017854530817951186,0.0034510279100276042,-0.0031999999999999806
+cnn_300-sentdim_True-trainwv_0.50-dropout_embed-10-pos_filt-parse,300,True,embed,filt,cnn_300-sentdim_True-trainwv,0.85844,0.8594798491165376,0.853212455656287,0.86584,-0.020480000000000054,-0.020634214806786066,-0.018306879193505154,-0.02303999999999995
+cnn_300-sentdim_True-trainwv_0.50-dropout_one_hot-10-pos_None-parse,300,True,one_hot,None,cnn_300-sentdim_True-trainwv,0.8772,0.8789909341742216,0.8663558663558664,0.892,-0.0017200000000000548,-0.0011231297491021142,-0.0051634684939257935,0.0031200000000000117
+cnn_300-sentdim_True-trainwv_0.50-dropout_one_hot-10-pos_filt-parse,300,True,one_hot,filt,cnn_300-sentdim_True-trainwv,0.85724,0.8552423443520584,0.8673796791443851,0.84344,-0.021680000000000033,-0.024871719571265327,-0.004139655705407086,-0.045440000000000036
