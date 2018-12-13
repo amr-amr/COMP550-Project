@@ -8,7 +8,7 @@ Github:                 https://github.com/amr-amr/COMP550-Project
 Public Data folder:     https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing
 
 Script Description:
-Script miscellaneous helper functions related to interacting with the file system
+Script containing miscellaneous helper functions related to interacting with the file system
 """
 import os
 import pickle

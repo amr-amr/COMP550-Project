@@ -17,7 +17,7 @@ from caching import WordIndexCache, EmbeddingsCache
 from keras.datasets import imdb
 
 
-def analyze_word_lengths(text_sequences):
+def analyze_text_lengths(text_sequences):
     """
     Graphs the frequency of sequence lengths among all text sequences
     """
@@ -46,7 +46,7 @@ def calculate_oov(word_index, embeddings):
 
 if __name__ == '__main__':
     (train_x, train_labels), (test_x, test_labels) = load_imdb_dataset()
-    analyze_word_lengths(train_x)
+    analyze_text_lengths(train_x)
 
     print('OOV embeddings percentage (imdb word index) = %f' %
           calculate_oov(imdb.get_word_index(), EmbeddingsCache.get_wv_embeddings()))

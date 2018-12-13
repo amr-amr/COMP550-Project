@@ -17,15 +17,15 @@ ________________________________________________________________________________
 parse_layer (Lambda)            (None, 300, 110)     0           filter_input[0][0]               
                                                                  wv_pos_concatenate[0][0]         
 __________________________________________________________________________________________________
-spatial_dropout1d_4 (SpatialDro (None, 300, 110)     0           parse_layer[0][0]                
+spatial_dropout1d_2 (SpatialDro (None, 300, 110)     0           parse_layer[0][0]                
 __________________________________________________________________________________________________
-bidirectional_4 (Bidirectional) (None, 128)          90112       spatial_dropout1d_4[0][0]        
+bidirectional_2 (Bidirectional) (None, 128)          90112       spatial_dropout1d_2[0][0]        
 __________________________________________________________________________________________________
-dropout_4 (Dropout)             (None, 128)          0           bidirectional_4[0][0]            
+dropout_2 (Dropout)             (None, 128)          0           bidirectional_2[0][0]            
 __________________________________________________________________________________________________
-batch_normalization_4 (BatchNor (None, 128)          512         dropout_4[0][0]                  
+batch_normalization_2 (BatchNor (None, 128)          512         dropout_2[0][0]                  
 __________________________________________________________________________________________________
-dense_4 (Dense)                 (None, 1)            129         batch_normalization_4[0][0]      
+dense_2 (Dense)                 (None, 1)            129         batch_normalization_2[0][0]      
 ==================================================================================================
 Total params: 6,434,923
 Trainable params: 90,667

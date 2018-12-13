@@ -195,26 +195,31 @@ class ModelFactory:
         if params.use_parse:
             input_layer, inputs = ModelFactory.create_parse_filter_layer(params, input_layer, inputs)
 
-        filter_sizes = (3, 8)
-        num_filters = 10
-        hidden_dims = 50
-        z = Dropout(params.dropout, name='dropout_input_%.2f' % params.dropout)(input_layer)
+        x = Dropout(params.dropout, name='dropout_input_%.2f' % params.dropout)(input_layer)
 
-        conv_blocks = []
-        for sz in filter_sizes:
-            conv = Convolution1D(filters=num_filters,
-                                 kernel_size=sz,
-                                 padding="valid",
-                                 activation="relu",
-                                 strides=1)(z)
-            conv = MaxPooling1D(pool_size=2)(conv)
-            conv = Flatten()(conv)
-            conv_blocks.append(conv)
-        z = Concatenate()(conv_blocks) if len(conv_blocks) > 1 else conv_blocks[0]
+        # First convolutional layer convolving with 3 words
+        conv1 = Convolution1D(filters=10,
+                             kernel_size=3,
+                             padding="valid",
+                             activation="relu",
+                             strides=1)(x)
+        conv1 = MaxPooling1D(pool_size=2)(conv1)
+        conv1 = Flatten()(conv1)
 
-        z = Dropout(params.dropout, name='dropout_pred_%.2f' % params.dropout)(z)
-        z = Dense(hidden_dims, activation="relu")(z)
-        model_output = Dense(1, activation="sigmoid")(z)
+        # First convolutional layer convolving with 8 words
+        conv2 = Convolution1D(filters=10,
+                              kernel_size=8,
+                              padding="valid",
+                              activation="relu",
+                              strides=1)(x)
+        conv2 = MaxPooling1D(pool_size=2)(conv2)
+        conv2 = Flatten()(conv2)
+
+        x = Concatenate()([conv1, conv2])
+
+        x = Dropout(params.dropout, name='dropout_pred_%.2f' % params.dropout)(x)
+        x = Dense(50, activation="relu")(x)
+        model_output = Dense(1, activation="sigmoid")(x)
 
         model = Model(inputs=inputs, outputs=model_output)
         model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])

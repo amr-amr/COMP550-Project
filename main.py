@@ -130,14 +130,14 @@ if __name__ == '__main__':
     # use_parse = [None, 'filt', 'concat']
     # ---------------------------------
     dropout = 0.5
-    epochs = 30
+    epochs = 20
     pos_dim = 10
-    batch_size = 256
+    batch_size = 128
     sent_dim = [300]
     nn_models = ['lstm', 'cnn', 'ff']
     train_wv = [False, True]
     use_pos = [None, 'embed', 'one_hot']
-    use_parse = ['filt']
+    use_parse = [None, 'filt']
 
     # Load data
     df_train_val, df_test = load_data('df_train.pkl', 'df_test.pkl')
@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     # Run all experiments
     experiment_wrapper = ExperimentWrapper()
-    exp_params = [ExperimentParameters(nn_model=nn, dropout=dropout, epochs=epochs, sent_dim=sd, pos_dim=pos_dim,
+    exp_params = [ExperimentParameters(nn_model=nn, dropout=dropout, epochs=40 if uparse is not None and not train_wv else epochs, sent_dim=sd, pos_dim=pos_dim,
                                        batch_size=batch_size, train_wv=wvt, use_pos=upos, use_parse=uparse)
                   for nn in nn_models for sd in sent_dim for wvt in train_wv for upos in use_pos for uparse in use_parse]
 
