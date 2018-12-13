@@ -12,15 +12,11 @@ Script Description:
 import os
 import pickle
 from keras.datasets import imdb
-from keras.preprocessing.text import Tokenizer
 from nltk import load
 from constants import DATA_DIRECTORY
 from helpers import save_pickle, load_pickle
 import gensim.downloader as gensim_api
 import numpy as np
-
-
-np.random.seed(250)
 
 
 class PosDictionary:
@@ -72,9 +68,6 @@ class WordIndexCache:
 
     @staticmethod
     def initialize(text):
-        # tokenizer = Tokenizer(lower=False, oov_token='<OOV>')
-        # tokenizer.fit_on_texts(text)
-        # WordIndexCache._word_index = tokenizer
 
         word_index = {}
         word_index["<PAD>"] = 0
@@ -113,15 +106,3 @@ class EmbeddingsCache:
 
         save_pickle(embeddings_path, EmbeddingsCache._embeddings_model)
         return EmbeddingsCache._embeddings_model
-
-    @staticmethod
-    def get_wv_embedding(word):
-        return EmbeddingsCache._embeddings_model[word]
-
-    @staticmethod
-    def get_init_embeddings(mat_dim):
-        if mat_dim in EmbeddingsCache._init_embeddings_cache:
-            return EmbeddingsCache._init_embeddings_cache[mat_dim]
-
-        EmbeddingsCache._init_embeddings_cache[mat_dim] = np.random.random(mat_dim)
-        return EmbeddingsCache._init_embeddings_cache[mat_dim]

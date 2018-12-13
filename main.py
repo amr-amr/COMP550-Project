@@ -93,7 +93,7 @@ class ExperimentWrapper:
         confusion_matrix = mra.get_cm("y_pred_label")
         print(metrics)
         print(confusion_matrix)
-        self.test_results_manager.save_result(params, metrics['accuracy'])
+        self.test_results_manager.save_result(params, metrics)
 
         with open(os.path.join(results_folder, 'metrics.txt'), 'w') as f:
             print(metrics, file=f)
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     # dropout = 0.5
     # epochs = 20
     # pos_dim = 10
-    # batch_size = 128
+    # batch_size = 256
     # sent_dim = [200, 400]
     # nn_models = ['cnn', 'lstm', 'ff']
     # train_wv = [False, True]
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     dropout = 0.5
     epochs = 20
     pos_dim = 10
-    batch_size = 128
+    batch_size = 256
     sent_dim = [300]
     nn_models = ['ff']
     train_wv = [False]

@@ -31,7 +31,7 @@ class ExperimentData:
 
 class ExperimentParameters:
 
-    def __init__(self, batch_size=128, train_wv=False,
+    def __init__(self, batch_size=256, train_wv=False,
                  use_pos=None, use_parse=None, pos_dict_len=None, sent_dim=300, wv_dim=100,
                  pos_dim=None, epochs=20, dropout=0.5, nn_model='lstm'):
         self.batch_size = batch_size
@@ -48,8 +48,8 @@ class ExperimentParameters:
         self.timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')
 
     def __str__(self) -> str:
-        return "nn_model=%s batch_size=%s sent_dim=%d train_wv=%s dropout=%.2f use_pos=%s pos_dim=%d use_parse=%s" \
-               % (self.nn_model, self.batch_size, self.sent_dim, self.train_wv, self.dropout,
+        return "nn_model=%s batch_size=%s sent_dim=%d wv_dim=%d train_wv=%s dropout=%.2f use_pos=%s pos_dim=%d use_parse=%s" \
+               % (self.nn_model, self.batch_size, self.sent_dim, self.wv_dim, self.train_wv, self.dropout,
                   self.use_pos, self.pos_dim, self.use_parse)
 
     def is_baseline(self):

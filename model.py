@@ -107,13 +107,13 @@ class ModelFactory:
     def word_index_input_tensor(params: ExperimentParameters):
         wi_input = Input(shape=(params.sent_dim,), name='word_index_input')
         word_index = WordIndexCache.get_word_index()
-
-        pretrained_wv = EmbeddingsCache.get_init_embeddings((len(word_index), params.wv_dim))
+        wv_cache = EmbeddingsCache.get_wv_embeddings()
+        pretrained_wv = 0.1 * np.ones((len(word_index), params.wv_dim))
         for word, index in word_index.items():
             try:
-                pretrained_wv[index] = EmbeddingsCache.get_wv_embedding(word)
+                pretrained_wv[index] = wv_cache[word]
             except:
-                pass
+                pretrained_wv[index] = 0.2*(np.random.random(params.wv_dim) - 0.5)
 
         embedding_layer = Embedding(len(word_index), params.wv_dim, input_length=params.sent_dim,
                                     embeddings_initializer='glorot_normal', weights=[pretrained_wv],

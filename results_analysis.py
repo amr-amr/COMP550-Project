@@ -166,8 +166,9 @@ class TestResultsManager:
                 df = pd.read_csv(file_path)
             else:
                 df = pd.DataFrame(columns=['model', 'sent_dim', 'train_wv', 'use_pos', 'use_parse',
-                                           'baseline', 'accuracy', 'acc_vs_baseline', 'f1-score', 'f1-score_vs_baseline',
-                                           'precision', 'precision_vs_baseline', 'recall', 'recall_vs_baseline'])
+                                           'baseline', 'accuracy', 'f1-score', 'precision', 'recall',
+                                           'acc_vs_baseline', 'f1-score_vs_baseline', 'precision_vs_baseline',
+                                           'recall_vs_baseline'])
 
             self._df_lookup[nn_model] = (df, file_path)
 

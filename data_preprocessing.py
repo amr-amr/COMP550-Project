@@ -45,7 +45,6 @@ class LinguisticDataExtractor:
             try:
                 i = self.spacy_pos_dict[pos_tag]
             except:
-                print('except')
                 i = 16
             spacy_pos_tags.append(i)
 
