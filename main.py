@@ -134,7 +134,7 @@ if __name__ == '__main__':
     pos_dim = 10
     batch_size = 128
     sent_dim = [300]
-    nn_models = ['lstm', 'cnn', 'ff']
+    nn_models = ['ff', 'cnn', 'lstm']
     train_wv = [False, True]
     use_pos = [None, 'embed', 'one_hot']
     use_parse = [None, 'filt']

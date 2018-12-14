@@ -12,3 +12,5 @@ The use of syntactic information has been found to improve performance on differ
 ## Program Entry Point: 
 - Python script version: main.py  
 - Notebook version: main_notebook.py
+
+__NOTE:__ To skip the length text pre-processing step, the already pre-processed text dataframes (df_train.pkl and df_test.pkl) can be downloaded from: https://drive.google.com/drive/folders/1Z0YrLC8KX81HgDlpj1OB4bCM6VGoAXmE?usp=sharing. These dataframe pickles should be placed in the /data subfolder
