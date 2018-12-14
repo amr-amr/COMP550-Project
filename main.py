@@ -132,7 +132,7 @@ if __name__ == '__main__':
     dropout = 0.5
     epochs = 20
     pos_dim = 10
-    batch_size = 128
+    batch_size = 256
     sent_dim = [300]
     nn_models = ['ff', 'cnn', 'lstm']
     train_wv = [False, True]
